@@ -36,7 +36,7 @@ async def token(ctx, token_address, network:str = 'eth'):
 async def chart(ctx, token_address: str, interval: str = '1h', max_size: str = '100'):
     ohlc_data = await get_ohlc_data(token_address, interval, max_size)
     if ohlc_data is not None:
-        chart_file = await process_ohlc_data_and_generate_chart(ohlc_data, 'default')
+        chart_file = await process_ohlc_data_and_generate_chart(token_address, ohlc_data, 'default')
         await ctx.send(file=discord.File(chart_file))
     else:
         await ctx.send("Failed to fetch OHLC data.")
@@ -45,7 +45,7 @@ async def chart(ctx, token_address: str, interval: str = '1h', max_size: str = '
 async def chartichi(ctx, token_address: str,  interval: str = '1h',  max_size: str = '100'):
     ohlc_data = await get_ohlc_data(token_address, interval, max_size)
     if ohlc_data is not None:
-        chart_file = await process_ohlc_data_and_generate_chart(ohlc_data, 'ichimoku')
+        chart_file = await process_ohlc_data_and_generate_chart(token_address, ohlc_data, 'ichimoku')
         await ctx.send(file=discord.File(chart_file))
     else:
         await ctx.send("Failed to fetch OHLC data.")
@@ -54,7 +54,7 @@ async def chartichi(ctx, token_address: str,  interval: str = '1h',  max_size: s
 async def chartdonchian(ctx, token_address: str,  interval: str = '1h',  max_size: str = '100'):
     ohlc_data = await get_ohlc_data(token_address, interval, max_size)
     if ohlc_data is not None:
-        chart_file = await process_ohlc_data_and_generate_chart(ohlc_data, 'donchian')
+        chart_file = await process_ohlc_data_and_generate_chart(token_address, ohlc_data, 'donchian')
         await ctx.send(file=discord.File(chart_file))
     else:
         await ctx.send("Failed to fetch OHLC data.")

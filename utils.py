@@ -84,7 +84,7 @@ async def process_token_info(tokeninfo):
     return data_to_display
 
 # Define the main processing function
-async def process_ohlc_data_and_generate_chart(ohlc_data, chart_type):
+async def process_ohlc_data_and_generate_chart(token_address, ohlc_data, chart_type):
     df = pd.DataFrame(ohlc_data['data'])
     df['date_open'] = pd.to_datetime(df['date_open'])
     df.set_index('date_open', inplace=True)
@@ -131,9 +131,10 @@ async def process_ohlc_data_and_generate_chart(ohlc_data, chart_type):
             'y2': df_filtered['Senkou_Span_B'].values,
             'alpha': 0.5
         }
-
+        title = f'Chart for {token_address}'
         mpf.plot(
             df_filtered,
+            title=title,
             type='candle',
             style='yahoo',
             addplot=ichimoku_plots,
@@ -163,9 +164,10 @@ async def process_ohlc_data_and_generate_chart(ohlc_data, chart_type):
             'alpha': 0.1,
             'color': '#2962FF'
         }
-
+        title = f'Chart for {token_address}'
         mpf.plot(
             df_filtered,
+            title=title,
             type='candle',
             style='yahoo',
             addplot=donchian_plots,
@@ -175,9 +177,11 @@ async def process_ohlc_data_and_generate_chart(ohlc_data, chart_type):
         return 'donchian_chart.png'
 
     else:
+        title = f'Chart for {token_address}'
         # Default candlestick plot
         mpf.plot(
             df_filtered,
+            title=title,
             mav=(13,25),
             type='candle',
             style='yahoo',
