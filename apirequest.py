@@ -31,7 +31,7 @@ async def get_ohlc_data(token_address, interval, max_size):
     fill = 'true'
     order = 'desc'
     volume = 'true'
-    key = 'g3rt33RwSAceXr'
+    key = ''
 
 
     params = {
