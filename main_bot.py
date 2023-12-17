@@ -3,7 +3,7 @@ from discord.ext import commands
 import os
 from dotenv import load_dotenv
 from commands import chart, chartichi, chartdonchian, token
-import commands as my_commands  # Import your commands
+
 
 # Load environment variables
 load_dotenv()
