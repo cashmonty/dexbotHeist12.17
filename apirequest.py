@@ -2,9 +2,64 @@ import aiohttp
 import datetime
 import asyncio
 import os
+import requests
 
 API_KEY = os.getenv('SYVE_API_KEY')
+def get_floor_info(slugdisplay):
+    api_key = 'd63f8020-97ac-4592-bf1f-962e19126eb6'
+     
+    url = 'https://api.tensor.so/graphql'
 
+    query = """
+        query ExampleQuery($slugsDisplay: [String!]) {
+            allCollections(slugsDisplay: $slugsDisplay) {
+                collections {
+                    compressed
+                    createdAt
+                    creator
+                    description
+                    id
+                    statsV2 {
+                        buyNowPrice
+                        floor1h
+                        floor24h
+                        floor7d
+                        marketCap
+                        numBids
+                        sellNowPrice
+                    }
+                }
+            }
+        }
+    """
+
+    variables = {
+        "slugsDisplay": slugdisplay
+    }
+
+    headers = {
+        'Content-Type': 'application/json',
+        'X-TENSOR-API-KEY': api_key
+    }
+        
+
+    response = requests.post(url, headers=headers, json={"query": query, "variables": variables})
+
+    if response.status_code == 200:
+        data = response.json()
+        all_collections = data.get("data", {}).get("allCollections", {}).get("collections", [])
+        
+        for collection in all_collections:
+            stats = collection.get("statsV2", {})
+            buy_now_price = stats.get("buyNowPrice", "N/A")
+            floor_1h = stats.get("floor1h", "N/A")
+            floor_24h = stats.get("floor24h", "N/A")
+            # ... [access other stats similarly]
+
+            # Format and send a message for each collection
+            stats_message = f"Data for collection {slugdisplay}: Buy Now Price: {buy_now_price}, Floor 1h: {floor_1h}, Floor 24h: {floor_24h}"
+            return stats_message
+    
 async def get_token_info(token_address, network):
     url = f'https://api.geckoterminal.com/api/v2/networks/{network}/tokens/{token_address}/pools'
     params = {'page': 1}

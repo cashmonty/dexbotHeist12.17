@@ -1,6 +1,6 @@
 
 import discord
-from apirequest import get_ohlc_data, get_token_info
+from apirequest import get_ohlc_data, get_token_info, get_floor_info
 from utils import process_ohlc_data_and_generate_chart, send_token_info
 from discord.ext import commands
 import textwrap
@@ -21,7 +21,14 @@ async def help(ctx):
 
     # Sending the embed
     await ctx.send(embed=embed)
+@commands.command(name='floor', help='Get information about a specific token')
+async def floor(ctx, slugdisplay):
+    floorinfo = await get_floor_info(slugdisplay)  # Fetch token info
 
+    if floorinfo is not None:
+        await ctx.send(floorinfo)  # Send formatted token info
+    else:
+        await ctx.send("Error retrieving floor information.")
 @commands.command(name='token', help='Get information about a specific token')
 async def token(ctx, token_address, network:str = 'eth'):
     tokeninfo = await get_token_info(token_address, network)  # Fetch token info
