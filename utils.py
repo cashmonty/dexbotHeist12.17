@@ -1,5 +1,6 @@
 import pandas as pd
 import mplfinance as mpf
+import discord
 
 
 # Define the calculate_ichimoku function
@@ -23,49 +24,71 @@ def calculate_ichimoku(df):
     df['Chikou_Span'] = df['Close'].shift(periods=-26)
 
     return df
+def format_currency(value):
+    try:
+        return "${:,.2f}".format(float(value))
+    except (ValueError, TypeError):
+        return "N/A"
 
+def format_percentage(value):
+    try:
+        return "{:.2f}%".format(float(value))
+    except (ValueError, TypeError):
+        return "N/A"
+
+async def send_token_info(ctx, tokeninfo):
+    processed_data = await process_token_info(tokeninfo)
+
+    # Create an embed for the message
+    embed = discord.Embed(title=processed_data["Pool Name"], color=0x0099ff)  # Customize the title and color
+
+    # Add fields to the embed
+    embed.add_field(name="Pool Address", value=processed_data["Pool Address"], inline=False)
+    embed.add_field(name="Base Token Price USD", value=processed_data["Base Token Price USD"], inline=True)
+    embed.add_field(name="Quote Token Price USD", value=processed_data["Quote Token Price USD"], inline=True)
+    embed.add_field(name="Fully Diluted Valuation (USD)", value=processed_data["Fully Diluted Valuation (USD)"], inline=False)
+    embed.add_field(name="Market Cap (USD)", value=processed_data["Market Cap (USD)"], inline=True)
+    embed.add_field(name="1H Price Change Percentage", value=processed_data["1H Price Change Percentage"], inline=True)
+    embed.add_field(name="24H Price Change Percentage", value=processed_data["24H Price Change Percentage"], inline=False)
+    embed.add_field(name="1H Volume (USD)", value=processed_data["1H Volume (USD)"], inline=True)
+    embed.add_field(name="24H Volume (USD)", value=processed_data["24H Volume (USD)"], inline=True)
+    embed.add_field(name="Reserve in USD", value=processed_data["Reserve in USD"], inline=False)
+    embed.add_field(name="Base Token ID", value=processed_data["Base Token ID"], inline=True)
+    embed.add_field(name="Quote Token ID", value=processed_data["Quote Token ID"], inline=True)
+    embed.add_field(name="DEX ID", value=processed_data["DEX ID"], inline=False)
+
+    await ctx.send(embed=embed)
 async def process_token_info(tokeninfo):
     df_pools = pd.json_normalize(tokeninfo['data'])
     pools_data = df_pools.set_index(df_pools['id'].apply(lambda x: x.split('_')[1])).to_dict('index')
 
-    # Process only the first pool in the dictionary
     pool_address, pool_info = next(iter(pools_data.items()))
 
-    # Extract token IDs from the relationships
-    base_token_id = pool_info.get('relationships.base_token.data.id', 'N/A')
-    quote_token_id = pool_info.get('relationships.quote_token.data.id', 'N/A')
-    dex_id = pool_info.get('relationships.dex.data.id', 'N/A')
+    data_to_display = {
+        "Pool Name": pool_info.get('attributes.name', 'N/A'),
+        "Pool Address": pool_address,
+        "Base Token Price USD": format_currency(pool_info.get('attributes.base_token_price_usd')),
+        "Quote Token Price USD": format_currency(pool_info.get('attributes.quote_token_price_usd')),
+        "Fully Diluted Valuation (USD)": format_currency(pool_info.get('attributes.fdv_usd')),
+        "Market Cap (USD)": format_currency(pool_info.get('attributes.market_cap_usd')),
+        "1H Price Change Percentage": format_percentage(pool_info.get('attributes.price_change_percentage.h1')),
+        "24H Price Change Percentage": format_percentage(pool_info.get('attributes.price_change_percentage.h24')),
+        "1H Volume (USD)": format_currency(pool_info.get('attributes.volume_usd.h1')),
+        "24H Volume (USD)": format_currency(pool_info.get('attributes.volume_usd.h24')),
+        "Reserve in USD": format_currency(pool_info.get('attributes.reserve_in_usd')),
+        "Base Token ID": pool_info.get('relationships.base_token.data.id', 'N/A'),
+        "Quote Token ID": pool_info.get('relationships.quote_token.data.id', 'N/A'),
+        "DEX ID": pool_info.get('relationships.dex.data.id', 'N/A')
+    }
 
-    # Constructing the message with various attributes
-    message = f"**Pool Address:** {pool_address}\n"
-    message += f"**Base Token Price USD:** {pool_info.get('attributes.base_token_price_usd', 'N/A')}\n"
-    message += f"**Quote Token Price USD:** {pool_info.get('attributes.quote_token_price_usd', 'N/A')}\n"
-    message += f"**Base Token Price in Native Currency:** {pool_info.get('attributes.base_token_price_native_currency', 'N/A')}\n"
-    message += f"**Quote Token Price in Native Currency:** {pool_info.get('attributes.quote_token_price_native_currency', 'N/A')}\n"
-    message += f"**Pool Name:** {pool_info.get('attributes.name', 'N/A')}\n"
-    message += f"**Fully Diluted Valuation (USD):** {pool_info.get('attributes.fdv_usd', 'N/A')}\n"
-    message += f"**Market Cap (USD):** {pool_info.get('attributes.market_cap_usd', 'N/A')}\n"
-    message += f"**1H Price Change Percentage:** {pool_info.get('attributes.price_change_percentage.h1', 'N/A')}\n"
-    message += f"**24H Price Change Percentage:** {pool_info.get('attributes.price_change_percentage.h24', 'N/A')}\n"
-    message += f"**1H Volume (USD):** {pool_info.get('attributes.volume_usd.h1', 'N/A')}\n"
-    message += f"**24H Volume (USD):** {pool_info.get('attributes.volume_usd.h24', 'N/A')}\n"
-    message += f"**Reserve in USD:** {pool_info.get('attributes.reserve_in_usd', 'N/A')}\n"
-
-    # Adding relationship data
-    message += f"**Base Token ID:** {base_token_id}\n"
-    message += f"**Quote Token ID:** {quote_token_id}\n"
-    message += f"**DEX ID:** {dex_id}\n"
-
-    return message
-
-
+    return data_to_display
 
 # Define the main processing function
 async def process_ohlc_data_and_generate_chart(ohlc_data, chart_type):
     df = pd.DataFrame(ohlc_data['data'])
     df['date_open'] = pd.to_datetime(df['date_open'])
     df.set_index('date_open', inplace=True)
-
+    df.sort_index(ascending=True, inplace=True)
     # Renaming columns to match mplfinance requirements
     df.rename(columns={
         'price_open': 'Open',
@@ -88,8 +111,6 @@ async def process_ohlc_data_and_generate_chart(ohlc_data, chart_type):
 
     df_filtered = df[(df['High'] <= upper_bound_high) & (df['Low'] >= lower_bound_low)]
 
-    # Flip the DataFrame to match mplfinance expected order
-    df_filtered_backwards = df_filtered.iloc[::-1]
 
     if chart_type == 'ichimoku':
         # Calculate the Ichimoku Cloud on the data
@@ -112,7 +133,7 @@ async def process_ohlc_data_and_generate_chart(ohlc_data, chart_type):
         }
 
         mpf.plot(
-            df_filtered_backwards,
+            df_filtered,
             type='candle',
             style='yahoo',
             addplot=ichimoku_plots,
@@ -144,7 +165,7 @@ async def process_ohlc_data_and_generate_chart(ohlc_data, chart_type):
         }
 
         mpf.plot(
-            df_filtered_backwards,
+            df_filtered,
             type='candle',
             style='yahoo',
             addplot=donchian_plots,
@@ -156,7 +177,7 @@ async def process_ohlc_data_and_generate_chart(ohlc_data, chart_type):
     else:
         # Default candlestick plot
         mpf.plot(
-            df_filtered_backwards,
+            df_filtered,
             mav=(13,25),
             type='candle',
             style='yahoo',
