@@ -9,7 +9,18 @@ async def send_split_messages(ctx, message, char_limit=2000):
     # Split the message into chunks of 'char_limit' characters
     for chunk in textwrap.wrap(message, char_limit, replace_whitespace=False):
         await ctx.send(chunk)
+@commands.command(name='help', help='call cash plz')
+async def help(ctx):
+    # Customize the title, color, and optionally, a description
+    embed = discord.Embed(title="Cashmontee Commands", color=0x0099ff, description="List of available commands:")
 
+    # Adding fields for each command
+    embed.add_field(name="**Token Command**", value="`/token <contract address> [network]`\nDefault `[network]` is ETH.", inline=False)
+    embed.add_field(name="**Chart Command**", value="`/chart <contract address> [timeframe] [amount of candles]`\nDefaults to 1h and 100 candles if 1 argument provided.", inline=False)
+    embed.add_field(name="**Chart Command with Indicators**", value="Indicators:\n`/chartichi` (same as `/chart`)\n`/chartdonchian` (same as `/chart`)", inline=False)
+
+    # Sending the embed
+    await ctx.send(embed=embed)
 
 @commands.command(name='token', help='Get information about a specific token')
 async def token(ctx, token_address, network:str = 'eth'):
