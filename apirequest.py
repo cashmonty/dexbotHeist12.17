@@ -28,7 +28,7 @@ async def get_ohlc_data(token_address, interval, max_size):
     price_type = 'price_token_usd_robust_tick_1'  # default price type
     from_timestamp = 0  # default
     until_timestamp = int(datetime.datetime.now().timestamp())  # current timestamp
-    max_size = 200  # default
+    max_size = max_size  # default
     fill = 'true'
     order = 'desc'
     volume = 'true'
