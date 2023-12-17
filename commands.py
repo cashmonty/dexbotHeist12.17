@@ -22,7 +22,7 @@ async def token(ctx, token_address, network:str = 'eth'):
 
 
 @commands.command(name='chart', help='Generate a simple candlestick chart for a given token and interval')
-async def chart(ctx, token_address: str, interval: str = '1h', max_size: str = 100):
+async def chart(ctx, token_address: str, interval: str = '1h', max_size: str = '100'):
     ohlc_data = await get_ohlc_data(token_address, interval, max_size)
     if ohlc_data is not None:
         chart_file = await process_ohlc_data_and_generate_chart(ohlc_data, 'default')
@@ -31,7 +31,7 @@ async def chart(ctx, token_address: str, interval: str = '1h', max_size: str = 1
         await ctx.send("Failed to fetch OHLC data.")
 
 @commands.command(name='chartichi', help='Generate an Ichimoku Cloud chart for a given token and interval')
-async def chartichi(ctx, token_address: str,  interval: str = '1h',  max_size: str = 100):
+async def chartichi(ctx, token_address: str,  interval: str = '1h',  max_size: str = '100'):
     ohlc_data = await get_ohlc_data(token_address, interval, max_size)
     if ohlc_data is not None:
         chart_file = await process_ohlc_data_and_generate_chart(ohlc_data, 'ichimoku')
@@ -40,7 +40,7 @@ async def chartichi(ctx, token_address: str,  interval: str = '1h',  max_size: s
         await ctx.send("Failed to fetch OHLC data.")
 
 @commands.command(name='chartdonchian', help='Generate a Donchian Channel chart for a given token and interval')
-async def chartdonchian(ctx, token_address: str,  interval: str = '1h',  max_size: str = 100):
+async def chartdonchian(ctx, token_address: str,  interval: str = '1h',  max_size: str = '100'):
     ohlc_data = await get_ohlc_data(token_address, interval, max_size)
     if ohlc_data is not None:
         chart_file = await process_ohlc_data_and_generate_chart(ohlc_data, 'donchian')
