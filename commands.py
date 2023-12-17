@@ -26,7 +26,7 @@ async def floor(ctx, slugdisplay):
     floorinfo = await get_floor_info(slugdisplay)  # Fetch token info
 
     if floorinfo is not None:
-        await ctx.send(floorinfo)  # Send formatted token info
+        ctx.send(floorinfo)  # Send formatted token info
     else:
         await ctx.send("Error retrieving floor information.")
 @commands.command(name='token', help='Get information about a specific token')
