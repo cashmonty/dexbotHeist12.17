@@ -36,12 +36,18 @@ async def token(ctx, token_address, network:str = 'eth'):
 
 @commands.command(name='chart', help='Generate a simple candlestick chart for a given token and interval')
 async def chart(ctx, token_address: str, interval: str = '1h', max_size: str = '100'):
-    token_name, ohlc_data = await get_ohlc_data(token_address, interval, max_size)
-    if ohlc_data is not None:
-        chart_file = await process_ohlc_data_and_generate_chart(token_name, ohlc_data, 'default')
-        await ctx.send(file=discord.File(chart_file))
-    else:
-        await ctx.send("Failed to fetch OHLC data.")
+    try:
+        token_name = await get_token_info(token_address)
+        ohlc_data = await get_ohlc_data(token_address, interval, max_size)
+        
+        if ohlc_data is not None:
+            chart_file = await process_ohlc_data_and_generate_chart(token_name, ohlc_data, 'default')
+            await ctx.send(file=discord.File(chart_file))
+        else:
+            await ctx.send("Failed to fetch OHLC data.")
+    except Exception as e:
+        await ctx.send(f"An error occurred: {e}")
+
 
 @commands.command(name='chartichi', help='Generate an Ichimoku Cloud chart for a given token and interval')
 async def chartichi(ctx, token_address: str,  interval: str = '1h',  max_size: str = '100'):

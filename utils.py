@@ -22,6 +22,23 @@ def calculate_ichimoku(df):
     df['Chikou_Span'] = df['Close'].shift(periods=-26)
 
     return df
+def create_custom_style():
+    # Define market colors for up and down candles
+    mc = mpf.make_marketcolors(
+        up='lightgreen', down='lightcoral',
+        edge='inherit', wick='inherit',
+        volume='in', ohlc='i'
+    )
+
+    # Create a custom style
+    s = mpf.make_mpf_style(
+        marketcolors=mc, 
+        facecolor='black',  # Background color of the chart
+        figcolor='black',   # Color of the area around the chart
+        gridcolor='gray',   # Grid color
+        gridstyle='-.',     # Grid style
+    )
+    return s
 def format_currency(value):
     try:
         return "${:,.2f}".format(float(value))
@@ -82,7 +99,7 @@ async def process_token_info(tokeninfo):
     return data_to_display
 
 # Define the main processing function
-async def process_ohlc_data_and_generate_chart(token_name, ohlc_data, chart_type):
+async def process_ohlc_data_and_generate_chart(ohlc_data, token_name, chart_type):
     df = pd.DataFrame(ohlc_data['data'])
     df['date_open'] = pd.to_datetime(df['date_open'])
     df.set_index('date_open', inplace=True)
@@ -109,7 +126,7 @@ async def process_ohlc_data_and_generate_chart(token_name, ohlc_data, chart_type
 
     df_filtered = df[(df['High'] <= upper_bound_high) & (df['Low'] >= lower_bound_low)]
 
-
+    custom_style = create_custom_style()
     if chart_type == 'ichimoku':
         # Calculate the Ichimoku Cloud on the data
         df_filtered = calculate_ichimoku(df_filtered)
@@ -130,15 +147,7 @@ async def process_ohlc_data_and_generate_chart(token_name, ohlc_data, chart_type
             'alpha': 0.5
         }
         title = f'Chart for {token_name}'
-        mpf.plot(
-            df_filtered,
-            title=title,
-            type='candle',
-            style='yahoo',
-            addplot=ichimoku_plots,
-            fill_between=ichimoku_fill,
-            savefig='ichimoku_chart.png'
-        )
+        mpf.plot(df_filtered, title=title, type='candle', style=custom_style, addplot=ichimoku_plots, fill_between=ichimoku_fill, savefig='ichimoku_chart.png')
         return 'ichimoku_chart.png'
 
     elif chart_type == 'donchian':
@@ -163,26 +172,11 @@ async def process_ohlc_data_and_generate_chart(token_name, ohlc_data, chart_type
             'color': '#2962FF'
         }
         title = f'Chart for {token_name}'
-        mpf.plot(
-            df_filtered,
-            title=title,
-            type='candle',
-            style='yahoo',
-            addplot=donchian_plots,
-            fill_between=donchian_fill,
-            savefig='donchian_chart.png'
-        )
+        mpf.plot(df_filtered, title=title, type='candle', style=custom_style, addplot=donchian_plots, fill_between=donchian_fill, savefig='donchian_chart.png')
         return 'donchian_chart.png'
 
     else:
         title = f'Chart for {token_name}'
         # Default candlestick plot
-        mpf.plot(
-            df_filtered,
-            title=title,
-            mav=(13,25),
-            type='candle',
-            style='yahoo',
-            savefig='default_chart.png'
-        )
+        mpf.plot(df_filtered, title=title, mav=(13,25), type='candle', style=custom_style, savefig='default_chart.png')
         return 'default_chart.png'

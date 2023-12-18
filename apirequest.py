@@ -69,22 +69,20 @@ async def get_token_info(token_address, network='eth'):
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=headers, params=params) as response:
             if response.status == 200:
-                return await response.json()
+                token_data = await response.json()
+                if 'data' in token_data and len(token_data['data']) > 0:
+                    token_name = token_data['data'][0]['attributes']['name']
+                else:
+                    token_name = 'Unknown Token'  # Default or error handling
+                return token_name
             else:
-                print(f"Error fetching data with status code: {response.status}")
+                # Handle non-200 responses, possibly raise an error or return None
                 return None
-    # Exception handling remains the same
 
 
 async def get_ohlc_data(token_address, interval, max_size):
     url = 'https://api.syve.ai/v1/price/historical/ohlc'
-    token_data = await get_token_info(token_address)
 
-    # Extracting token_name
-    if token_data and 'data' in token_data and len(token_data['data']) > 0:
-        token_name = token_data['data'][0]['attributes']['name']
-    else:
-        token_name = 'Unknown Token'  # Default or error handling
     pool_address = 'all'  # default to consider all pools
     price_type = 'price_token_usd_robust_tick_1'  # default price type
     from_timestamp = 0  # default
