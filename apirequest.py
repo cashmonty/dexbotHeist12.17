@@ -61,7 +61,7 @@ async def get_floor_info(ctx, slugdisplay):
             embed.add_field(name="Floor Change 1h", value=f"{floor_1h}", inline=False)
             await ctx.send(embed=embed)
     
-async def get_token_info(token_address, network):
+async def get_token_info(token_address, network='eth'):
     url = f'https://api.geckoterminal.com/api/v2/networks/{network}/tokens/{token_address}/pools'
     params = {'page': 1}
     headers = {'Accept': 'application/json;version=20230302'}
