@@ -69,15 +69,11 @@ async def get_token_info(token_address, network='eth'):
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=headers, params=params) as response:
             if response.status == 200:
-                token_data = await response.json()
-                if 'data' in token_data and len(token_data['data']) > 0:
-                    token_name = token_data['data'][0]['attributes']['name']
-                else:
-                    token_name = 'Unknown Token'  # Default or error handling
-                return token_name
+                return await response.json()
             else:
-                # Handle non-200 responses, possibly raise an error or return None
+                print(f"Error fetching data with status code: {response.status}")
                 return None
+    # Exception handling remains the same
 
 
 async def get_ohlc_data(token_address, interval, max_size):

@@ -36,8 +36,6 @@ def create_custom_style():
         facecolor='black',  # Background color of the chart
         figcolor='white',   # Color of the area around the chart
         gridcolor='black',   # Grid color (set to 'black' or '' to hide)
-        gridstyle='',       # Grid style (empty string disables grid)
-        title_color='black'  # Color of the title
     )
     return s
 def format_currency(value):
@@ -74,10 +72,18 @@ async def send_token_info(ctx, tokeninfo):
     embed.add_field(name="DEX ID", value=processed_data["DEX ID"], inline=False)
 
     await ctx.send(embed=embed)
+def get_token_name(token_data):
+    df_pools = pd.json_normalize(token_data['data'])
+    pools_data = df_pools.set_index(df_pools['id'].apply(lambda x: x.split('_')[1])).to_dict('index')
+
+    _, pool_info = next(iter(pools_data.items()), (None, {}))  # Added default value to prevent StopIteration error
+
+    token_name = pool_info.get('attributes', {}).get('name', 'N/A')
+    return token_name
 async def process_token_info(tokeninfo):
     df_pools = pd.json_normalize(tokeninfo['data'])
     pools_data = df_pools.set_index(df_pools['id'].apply(lambda x: x.split('_')[1])).to_dict('index')
-
+    
     pool_address, pool_info = next(iter(pools_data.items()))
 
     data_to_display = {

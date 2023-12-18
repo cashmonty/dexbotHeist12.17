@@ -1,7 +1,7 @@
 
 import discord
 from apirequest import get_ohlc_data, get_token_info, get_floor_info
-from utils import process_ohlc_data_and_generate_chart, send_token_info
+from utils import process_ohlc_data_and_generate_chart, send_token_info, get_token_name
 from discord.ext import commands
 import textwrap
 
@@ -37,10 +37,11 @@ async def token(ctx, token_address, network:str = 'eth'):
 @commands.command(name='chart', help='Generate a simple candlestick chart for a given token and interval')
 async def chart(ctx, token_address: str, interval: str = '1h', max_size: str = '100'):
     try:
-        token_name = await get_token_info(token_address)
+        token_data = await get_token_info(token_address, network='eth')
         ohlc_data = await get_ohlc_data(token_address, interval, max_size)
         
         if ohlc_data is not None:
+            token_name = get_token_name(token_data)  # Removed await
             chart_file = await process_ohlc_data_and_generate_chart(ohlc_data, token_name, 'default')
             await ctx.send(file=discord.File(chart_file))
         else:
@@ -49,22 +50,32 @@ async def chart(ctx, token_address: str, interval: str = '1h', max_size: str = '
         await ctx.send(f"An error occurred: {e}")
 
 
-@commands.command(name='chartichi', help='Generate an Ichimoku Cloud chart for a given token and interval')
-async def chartichi(ctx, token_address: str,  interval: str = '1h',  max_size: str = '100'):
-    token_name = await get_token_info(token_address)
-    ohlc_data = await get_ohlc_data(token_address, interval, max_size)
-    if ohlc_data is not None:
-        chart_file = await process_ohlc_data_and_generate_chart(ohlc_data, token_name, 'ichimoku')
-        await ctx.send(file=discord.File(chart_file))
-    else:
-        await ctx.send("Failed to fetch OHLC data.")
+@commands.command(name='chartichi', help='Generate a simple candlestick chart for a given token and interval')
+async def chartichi(ctx, token_address: str, interval: str = '1h', max_size: str = '100'):
+    try:
+        token_data = await get_token_info(token_address, network='eth')
+        ohlc_data = await get_ohlc_data(token_address, interval, max_size)
+        
+        if ohlc_data is not None:
+            token_name = get_token_name(token_data)  # Removed await
+            chart_file = await process_ohlc_data_and_generate_chart(ohlc_data, token_name, 'ichimoku')
+            await ctx.send(file=discord.File(chart_file))
+        else:
+            await ctx.send("Failed to fetch OHLC data.")
+    except Exception as e:
+        await ctx.send(f"An error occurred: {e}")
 
-@commands.command(name='chartdonchian', help='Generate a Donchian Channel chart for a given token and interval')
-async def chartdonchian(ctx, token_address: str,  interval: str = '1h',  max_size: str = '100'):
-    token_name = await get_token_info(token_address)
-    ohlc_data = await get_ohlc_data(token_address, interval, max_size)
-    if ohlc_data is not None:
-        chart_file = await process_ohlc_data_and_generate_chart(ohlc_data, token_name, 'donchian')
-        await ctx.send(file=discord.File(chart_file))
-    else:
-        await ctx.send("Failed to fetch OHLC data.")
+@commands.command(name='chartdonchian', help='Generate a simple candlestick chart for a given token and interval')
+async def chartdonchian(ctx, token_address: str, interval: str = '1h', max_size: str = '100'):
+    try:
+        token_data = await get_token_info(token_address, network='eth')
+        ohlc_data = await get_ohlc_data(token_address, interval, max_size)
+        
+        if ohlc_data is not None:
+            token_name = get_token_name(token_data)  # Removed await
+            chart_file = await process_ohlc_data_and_generate_chart(ohlc_data, token_name, 'donchian')
+            await ctx.send(file=discord.File(chart_file))
+        else:
+            await ctx.send("Failed to fetch OHLC data.")
+    except Exception as e:
+        await ctx.send(f"An error occurred: {e}")
