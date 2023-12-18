@@ -79,7 +79,7 @@ async def get_token_info(token_address, network='eth'):
 async def get_ohlc_data(token_address, interval, max_size):
     url = 'https://api.syve.ai/v1/price/historical/ohlc'
     token_data = await get_token_info(token_address)
-    token_name = token_data['attributes']['name']  # Adjust according to the actual structure of token_data
+    token_name = token_data['data']['attributes']['name']  # Adjust according to the actual structure of token_data
     # Setting default values for other parameters
     pool_address = 'all'  # default to consider all pools
     price_type = 'price_token_usd_robust_tick_1'  # default price type
