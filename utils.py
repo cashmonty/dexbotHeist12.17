@@ -73,12 +73,18 @@ async def send_token_info(ctx, tokeninfo):
 
     await ctx.send(embed=embed)
 def get_token_name(token_data):
+    # Normalize the JSON data into a flat table
     df_pools = pd.json_normalize(token_data['data'])
+    # Assuming 'id' is part of the data and is unique, use it as the index
     pools_data = df_pools.set_index(df_pools['id'].apply(lambda x: x.split('_')[1])).to_dict('index')
 
-    _, pool_info = next(iter(pools_data.items()), (None, {}))  # Added default value to prevent StopIteration error
+    # Extract the first item from the pools_data dictionary
+    _, pool_info = next(iter(pools_data.items()), (None, {}))
 
+    # Access the 'name' from the 'attributes' dictionary
+    # You may need to adjust the path to 'name' based on the actual structure of pool_info
     token_name = pool_info.get('attributes', {}).get('name', 'N/A')
+    
     return token_name
 async def process_token_info(tokeninfo):
     df_pools = pd.json_normalize(tokeninfo['data'])
