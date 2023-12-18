@@ -12,7 +12,7 @@ async def send_split_messages(ctx, message, char_limit=2000):
 @commands.command(name='help', help='call cash plz')
 async def help(ctx):
     # Customize the title, color, and optionally, a description
-    embed = discord.Embed(title="Cashmontee Commands", color=0x0099ff, description="List of available commands:")
+    embed = discord.Embed(title="**Cashmontee Commands**", color=0x0099ff, description="List of available commands:")
 
     # Adding fields for each command
     embed.add_field(name="**Token Command**", value="`/token <contract address> [network]`\nDefault `[network]` is ETH.", inline=False)
@@ -51,7 +51,8 @@ async def chart(ctx, token_address: str, interval: str = '1h', max_size: str = '
 
 @commands.command(name='chartichi', help='Generate an Ichimoku Cloud chart for a given token and interval')
 async def chartichi(ctx, token_address: str,  interval: str = '1h',  max_size: str = '100'):
-    token_name, ohlc_data = await get_ohlc_data(token_address, interval, max_size)
+    token_name = await get_token_info(token_address)
+    ohlc_data = await get_ohlc_data(token_address, interval, max_size)
     if ohlc_data is not None:
         chart_file = await process_ohlc_data_and_generate_chart(ohlc_data, token_name, 'ichimoku')
         await ctx.send(file=discord.File(chart_file))
@@ -60,7 +61,8 @@ async def chartichi(ctx, token_address: str,  interval: str = '1h',  max_size: s
 
 @commands.command(name='chartdonchian', help='Generate a Donchian Channel chart for a given token and interval')
 async def chartdonchian(ctx, token_address: str,  interval: str = '1h',  max_size: str = '100'):
-    token_name, ohlc_data = await get_ohlc_data(token_address, interval, max_size)
+    token_name = await get_token_info(token_address)
+    ohlc_data = await get_ohlc_data(token_address, interval, max_size)
     if ohlc_data is not None:
         chart_file = await process_ohlc_data_and_generate_chart(ohlc_data, token_name, 'donchian')
         await ctx.send(file=discord.File(chart_file))

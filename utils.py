@@ -35,8 +35,10 @@ def create_custom_style():
         marketcolors=mc, 
         facecolor='black',  # Background color of the chart
         figcolor='black',   # Color of the area around the chart
-        gridcolor='gray',   # Grid color
-        gridstyle='-.',     # Grid style
+        gridcolor='black',   # Grid color (set to 'black' or '' to hide)
+        gridstyle='',       # Grid style (empty string disables grid)
+        axis_labelcolor='white', # Color of the axis labels
+        title_color='white'  # Color of the title
     )
     return s
 def format_currency(value):
@@ -152,7 +154,7 @@ async def process_ohlc_data_and_generate_chart(ohlc_data, token_name, chart_type
 
     elif chart_type == 'donchian':
         # Calculate Donchian Channels
-        period = 10
+        period = 20
         df_filtered['Upper'] = df_filtered['High'].rolling(period).max()
         df_filtered['Lower'] = df_filtered['Low'].rolling(period).min()
         df_filtered['Middle'] = (df_filtered['Upper'] + df_filtered['Lower']) / 2
