@@ -34,11 +34,10 @@ def create_custom_style():
     s = mpf.make_mpf_style(
         marketcolors=mc, 
         facecolor='black',  # Background color of the chart
-        figcolor='black',   # Color of the area around the chart
+        figcolor='white',   # Color of the area around the chart
         gridcolor='black',   # Grid color (set to 'black' or '' to hide)
         gridstyle='',       # Grid style (empty string disables grid)
-        axis_labelcolor='white', # Color of the axis labels
-        title_color='white'  # Color of the title
+        title_color='black'  # Color of the title
     )
     return s
 def format_currency(value):
