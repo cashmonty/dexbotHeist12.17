@@ -111,9 +111,9 @@ async def get_ohlc_data(token_address, interval, max_size):
         async with aiohttp.ClientSession() as session:
             async with session.get(url, params=params) as response:
                 if response.status == 200:
-                    ohlc_data = await response.json()
+                    return await response.json()
                     # Include token_name in the data returned
-                    return ohlc_data
+                    
                 else:
                     print(f"Error fetching data with status code: {response.status}")
                     return None, None
