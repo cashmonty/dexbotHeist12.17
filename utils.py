@@ -3,9 +3,7 @@ import mplfinance as mpf
 import discord
 
 
-# Define the calculate_ichimoku function
 def calculate_ichimoku(df):
-    
     # Calculate Ichimoku Cloud components
     high_9 = df['High'].rolling(window=9).max()
     low_9 = df['Low'].rolling(window=9).min()
@@ -84,7 +82,7 @@ async def process_token_info(tokeninfo):
     return data_to_display
 
 # Define the main processing function
-async def process_ohlc_data_and_generate_chart(token_address, ohlc_data, chart_type):
+async def process_ohlc_data_and_generate_chart(token_name, ohlc_data, chart_type):
     df = pd.DataFrame(ohlc_data['data'])
     df['date_open'] = pd.to_datetime(df['date_open'])
     df.set_index('date_open', inplace=True)
@@ -131,7 +129,7 @@ async def process_ohlc_data_and_generate_chart(token_address, ohlc_data, chart_t
             'y2': df_filtered['Senkou_Span_B'].values,
             'alpha': 0.5
         }
-        title = f'Chart for {token_address}'
+        title = f'Chart for {token_name}'
         mpf.plot(
             df_filtered,
             title=title,
@@ -164,7 +162,7 @@ async def process_ohlc_data_and_generate_chart(token_address, ohlc_data, chart_t
             'alpha': 0.1,
             'color': '#2962FF'
         }
-        title = f'Chart for {token_address}'
+        title = f'Chart for {token_name}'
         mpf.plot(
             df_filtered,
             title=title,
@@ -177,7 +175,7 @@ async def process_ohlc_data_and_generate_chart(token_address, ohlc_data, chart_t
         return 'donchian_chart.png'
 
     else:
-        title = f'Chart for {token_address}'
+        title = f'Chart for {token_name}'
         # Default candlestick plot
         mpf.plot(
             df_filtered,

@@ -2,14 +2,15 @@ import aiohttp
 import datetime
 import asyncio
 import os
+import discord
 import requests
 
-API_KEY = os.getenv('SYVE_API_KEY')
-def get_floor_info(slugdisplay):
-    api_key = 'd63f8020-97ac-4592-bf1f-962e19126eb6'
-     
-    url = 'https://api.tensor.so/graphql'
 
+API_KEY = os.getenv('SYVE_API_KEY')
+
+async def get_floor_info(ctx, slugdisplay):
+    api_key = 'd63f8020-97ac-4592-bf1f-962e19126eb6'
+    url = 'https://api.tensor.so/graphql'
     query = """
         query ExampleQuery($slugsDisplay: [String!]) {
             allCollections(slugsDisplay: $slugsDisplay) {
@@ -32,23 +33,21 @@ def get_floor_info(slugdisplay):
             }
         }
     """
-
-    variables = {
-        "slugsDisplay": slugdisplay
-    }
-
+    variables = {"slugsDisplay": slugdisplay}
     headers = {
         'Content-Type': 'application/json',
         'X-TENSOR-API-KEY': api_key
     }
-        
-
     response = requests.post(url, headers=headers, json={"query": query, "variables": variables})
 
     if response.status_code == 200:
         data = response.json()
         all_collections = data.get("data", {}).get("allCollections", {}).get("collections", [])
-        
+
+        if not all_collections:
+            await ctx.send("No collections found for the given slug.")
+            return
+
         for collection in all_collections:
             stats = collection.get("statsV2", {})
             buy_now_price = stats.get("buyNowPrice", "N/A")
@@ -56,9 +55,11 @@ def get_floor_info(slugdisplay):
             floor_24h = stats.get("floor24h", "N/A")
             # ... [access other stats similarly]
 
-            # Format and send a message for each collection
-            stats_message = f"Data for collection {slugdisplay}: Buy Now Price: {buy_now_price}, Floor 1h: {floor_1h}, Floor 24h: {floor_24h}"
-            return stats_message
+            embed = discord.Embed(title=f"{slugdisplay}", color=0x0099ff)
+            embed.add_field(name="Buy Now Price", value=f"{buy_now_price}", inline=False)
+            embed.add_field(name="Floor Change 24h", value=f"{floor_24h}", inline=False)
+            embed.add_field(name="Floor Change 1h", value=f"{floor_1h}", inline=False)
+            await ctx.send(embed=embed)
     
 async def get_token_info(token_address, network):
     url = f'https://api.geckoterminal.com/api/v2/networks/{network}/tokens/{token_address}/pools'
@@ -77,7 +78,8 @@ async def get_token_info(token_address, network):
 
 async def get_ohlc_data(token_address, interval, max_size):
     url = 'https://api.syve.ai/v1/price/historical/ohlc'
-
+    token_data = await get_token_info(token_address)
+    token_name = token_data['attributes']['name']  # Adjust according to the actual structure of token_data
     # Setting default values for other parameters
     pool_address = 'all'  # default to consider all pools
     price_type = 'price_token_usd_robust_tick_1'  # default price type
@@ -107,13 +109,15 @@ async def get_ohlc_data(token_address, interval, max_size):
         async with aiohttp.ClientSession() as session:
             async with session.get(url, params=params) as response:
                 if response.status == 200:
-                    return await response.json()
+                    ohlc_data = await response.json()
+                    # Include token_name in the data returned
+                    return ohlc_data, token_name
                 else:
                     print(f"Error fetching data with status code: {response.status}")
-                    return None
+                    return None, None
     except aiohttp.ClientError as e:
         print(f"HTTP request error: {e}")
-        return None
+        return None, None
     except asyncio.TimeoutError as e:
         print(f"Request timed out: {e}")
         return None
