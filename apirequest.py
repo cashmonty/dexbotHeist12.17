@@ -113,7 +113,7 @@ async def get_ohlc_data(token_address, interval, max_size):
                 if response.status == 200:
                     ohlc_data = await response.json()
                     # Include token_name in the data returned
-                    return ohlc_data, token_name
+                    return ohlc_data
                 else:
                     print(f"Error fetching data with status code: {response.status}")
                     return None, None
