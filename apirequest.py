@@ -4,6 +4,7 @@ import asyncio
 import os
 import discord
 import requests
+from utils import get_token_name_and_pool
 
 
 API_KEY = os.getenv('SYVE_API_KEY')
@@ -48,19 +49,55 @@ async def get_floor_info(ctx, slugdisplay):
             await ctx.send("No collections found for the given slug.")
             return
 
-        for collection in all_collections:
-            stats = collection.get("statsV2", {})
-            buy_now_price = stats.get("buyNowPrice", "N/A")
-            floor_1h = stats.get("floor1h", "N/A")
-            floor_24h = stats.get("floor24h", "N/A")
-            # ... [access other stats similarly]
+    for collection in all_collections:
+        stats = collection.get("statsV2", {})
+        
+        # Apply formatting to the 'buy now price'
+        buy_now_price = stats.get("buyNowPrice", "N/A")
+        if buy_now_price != "N/A":
+            buy_now_price = float(buy_now_price) * 1e-09
+            buy_now_price = f"{buy_now_price:,.2f}SOL"
 
-            embed = discord.Embed(title=f"{slugdisplay}", color=0x0099ff)
-            embed.add_field(name="Buy Now Price", value=f"{buy_now_price}", inline=False)
-            embed.add_field(name="Floor Change 24h", value=f"{floor_24h}", inline=False)
-            embed.add_field(name="Floor Change 1h", value=f"{floor_1h}", inline=False)
-            await ctx.send(embed=embed)
-    
+        floor_1h = stats.get("floor1h", "N/A")
+        floor_24h = stats.get("floor24h", "N/A")
+
+        # Format Floor Change 24h
+        if floor_24h != "N/A":
+            floor_24h = float(floor_24h) * 100  # Converting to percentage
+            floor_24h = f"{floor_24h:.2f}SOL"   # Formatting to two decimal places
+
+        # Format Floor Change 1h
+        if floor_1h != "N/A":
+            floor_1h = float(floor_1h) * 100    # Moving decimal two places to the right
+            floor_1h = f"{floor_1h:.2f}SOL"     # Formatting to two decimal places
+
+        # Your formatted values are now in floor_24h and floor_1h
+
+
+        # Create embed with formatted prices
+        embed = discord.Embed(title=f"{slugdisplay}", color=0x0099ff)
+        embed.add_field(name="Buy Now Price", value=buy_now_price, inline=False)
+        embed.add_field(name="Floor Change 24h", value=floor_24h, inline=False)
+        embed.add_field(name="Floor Change 1h", value=floor_1h, inline=False)
+
+        await ctx.send(embed=embed)
+async def get_trade_info(token_pool, trade_volume_in_usd_greater_than='2000', network='eth'):
+
+
+    url = f'https://api.geckoterminal.com/api/v2/networks/{network}/pools/{token_pool}/trades?trade_volume_in_usd_greater_than={trade_volume_in_usd_greater_than}'
+
+    params = {'page': 1}
+    headers = {'Accept': 'application/json;version=20230302'}
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers, params=params) as response:
+            if response.status == 200:
+                return await response.json()
+                
+            else:
+                print(f"Error fetching data with status code: {response.status}")
+                return None
+    # Exception handling remains the same    
 async def get_token_info(token_address, network='eth'):
     url = f'https://api.geckoterminal.com/api/v2/networks/{network}/tokens/{token_address}/pools'
     params = {'page': 1}
@@ -76,7 +113,7 @@ async def get_token_info(token_address, network='eth'):
     # Exception handling remains the same
 
 
-async def get_ohlc_data(token_address, interval, max_size):
+async def get_ohlc_data(token_address, interval, max_size='200'):
     url = 'https://api.syve.ai/v1/price/historical/ohlc'
 
     pool_address = 'all'  # default to consider all pools

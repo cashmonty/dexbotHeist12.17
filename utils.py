@@ -81,6 +81,17 @@ def get_token_name(token_data):
         token_name = 'Unknown Token'  # Default name if 'data' is empty or not present
 
     return token_name
+def get_token_name_and_pool(tokeninfo):
+    # Check if 'data' is in the response and it has at least one item
+    if 'data' in tokeninfo and len(tokeninfo['data']) > 0:
+        # Get the 'name' attribute from the first item's 'attributes'
+        token_name = tokeninfo['data'][0]['attributes'].get('name', 'N/A')
+        token_pool = tokeninfo['data'][0]['attributes'].get('address', 'N/A')    
+        print(token_name, token_pool)    
+    else:
+        token_name = 'Unknown Token'  # Default name if 'data' is empty or not present
+
+    return token_name, token_pool
 async def process_token_info(tokeninfo):
     df_pools = pd.json_normalize(tokeninfo['data'])
     pools_data = df_pools.set_index(df_pools['id'].apply(lambda x: x.split('_')[1])).to_dict('index')
@@ -105,8 +116,37 @@ async def process_token_info(tokeninfo):
     }
 
     return data_to_display
+async def convert_block_to_timeframe(block_number):
+    # Placeholder for the function that converts block numbers to human-readable timeframes
+    # Implement the logic based on your blockchain data
+    return "Human-readable Timeframe"
 
-# Define the main processing function
+async def process_trades(trade_data, token_name, token_pool, ctx):
+    # Load into a DataFrame
+    df = pd.json_normalize(trade_data['data'])
+
+    # Sort by 'volume_in_usd' in descending order and take the top 10
+    df = df.sort_values(by='attributes.volume_in_usd', ascending=False).head(10)
+
+    # Now create the Discord embed
+    embed = discord.Embed(title="Recent Trades", color=0x00ff00)
+
+    for index, row in df.iterrows():
+        kind = row['attributes.kind']
+        volume_in_usd = row['attributes.volume_in_usd']
+        block_number = row['attributes.block_number']
+        wallet = row['attributes.tx_from_address']
+
+        embed.add_field(
+            name=f"Trader {wallet}",
+            value=(f"Token: {token_name}\n"
+                   f"Kind: {kind.capitalize()}\n"
+                   f"Volume (USD): ${float(volume_in_usd):,.2f}\n"
+                   f"Time: {block_number}"),
+            inline=False
+        )
+
+    await ctx.send(embed=embed)
 async def process_ohlc_data_and_generate_chart(ohlc_data, token_name, chart_type):
     df = pd.DataFrame(ohlc_data['data'])
     df['date_open'] = pd.to_datetime(df['date_open'])
@@ -135,32 +175,41 @@ async def process_ohlc_data_and_generate_chart(ohlc_data, token_name, chart_type
     df_filtered = df[(df['High'] <= upper_bound_high) & (df['Low'] >= lower_bound_low)]
 
     custom_style = create_custom_style()
+    
+
     if chart_type == 'ichimoku':
         # Calculate the Ichimoku Cloud on the data
-        df_filtered = calculate_ichimoku(df_filtered)
-
-        # Create Ichimoku Cloud lines for plotting
+        df_filtered = calculate_ichimoku(df)
         ichimoku_plots = [
-            mpf.make_addplot(df_filtered['Tenkan-sen'], color='#fcc905'),
-            mpf.make_addplot(df_filtered['Kijun-sen'], color='#F83C78'),
-            mpf.make_addplot(df_filtered['Senkou_Span_A'], color='#006B3D', alpha=0.5),
-            mpf.make_addplot(df_filtered['Senkou_Span_B'], color='#D3212C', alpha=0.5),
-            mpf.make_addplot(df_filtered['Chikou_Span'], color='#8D8D16'),
+            mpf.make_addplot(df_filtered['Tenkan-sen'], color='#00FFFF'),  # Cyan for Tenkan-sen
+            mpf.make_addplot(df_filtered['Kijun-sen'], color='#FF00FF'),   # Magenta for Kijun-sen
+            mpf.make_addplot(df_filtered['Senkou_Span_A'], color='#00FF00', alpha=0.5),  # Light green for Senkou Span A
+            mpf.make_addplot(df_filtered['Senkou_Span_B'], color='#FFA500', alpha=0.5),  # Bright orange for Senkou Span B
+            mpf.make_addplot(df_filtered['Chikou_Span'], color='#ADD8E6')  # Light blue for Chikou Span
         ]
 
-        # Prepare the fill_between parameters
-        ichimoku_fill = {
-            'y1': df_filtered['Senkou_Span_A'].values,
-            'y2': df_filtered['Senkou_Span_B'].values,
-            'alpha': 0.5
-        }
+        # Fill between Senkou Span A and B
+        ichimoku_fill_up = dict(y1=df_filtered['Senkou_Span_A'].values, y2=df_filtered['Senkou_Span_B'].values,
+                                where=df_filtered['Senkou_Span_A'] >= df_filtered['Senkou_Span_B'], alpha=0.5, color='#a6f7a6')
+        ichimoku_fill_down = dict(y1=df_filtered['Senkou_Span_A'].values, y2=df_filtered['Senkou_Span_B'].values,
+                                where=df_filtered['Senkou_Span_A'] < df_filtered['Senkou_Span_B'], alpha=0.5, color='#CD5555')
+
         title = f'Chart for {token_name}'
-        mpf.plot(df_filtered, title=title, type='candle', style=custom_style, addplot=ichimoku_plots, fill_between=ichimoku_fill, savefig='ichimoku_chart.png')
+        mpf.plot(
+            df_filtered,
+            title=title,
+            type='candle',
+            style=custom_style,
+            volume=True,
+            addplot=ichimoku_plots,
+            fill_between=[ichimoku_fill_up, ichimoku_fill_down],
+            savefig='ichimoku_chart.png'
+        )
         return 'ichimoku_chart.png'
 
     elif chart_type == 'donchian':
         # Calculate Donchian Channels
-        period = 20
+        period = 10
         df_filtered['Upper'] = df_filtered['High'].rolling(period).max()
         df_filtered['Lower'] = df_filtered['Low'].rolling(period).min()
         df_filtered['Middle'] = (df_filtered['Upper'] + df_filtered['Lower']) / 2
@@ -180,11 +229,27 @@ async def process_ohlc_data_and_generate_chart(ohlc_data, token_name, chart_type
             'color': '#2962FF'
         }
         title = f'Chart for {token_name}'
-        mpf.plot(df_filtered, title=title, type='candle', style=custom_style, addplot=donchian_plots, fill_between=donchian_fill, savefig='donchian_chart.png')
+        mpf.plot(
+            df_filtered,
+            title=title,
+            type='candle',
+            style=custom_style,
+            volume=True,
+            addplot=donchian_plots,
+            fill_between=donchian_fill,
+            savefig='donchian_chart.png'
+        )
         return 'donchian_chart.png'
-
     else:
         title = f'Chart for {token_name}'
         # Default candlestick plot
-        mpf.plot(df_filtered, title=title, mav=(13,25), type='candle', style=custom_style, savefig='default_chart.png')
+        mpf.plot(
+            df_filtered,
+            title=title,
+            mav=(13,25),
+            type='candle',
+            style=custom_style,
+            volume=True,
+            savefig='default_chart.png'
+        )
         return 'default_chart.png'

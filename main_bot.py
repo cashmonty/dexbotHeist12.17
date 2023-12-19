@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 import os
 from dotenv import load_dotenv
-from commands import chart, chartichi, chartdonchian, token, floor
+from commands import chart, chartichi, chartdonchian, token, floor, trades
 
 
 # Load environment variables
@@ -21,6 +21,7 @@ bot.add_command(chart)
 bot.add_command(chartichi)
 bot.add_command(chartdonchian)
 bot.add_command(floor)
+bot.add_command(trades)
 
 @bot.event
 async def on_ready():

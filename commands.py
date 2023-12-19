@@ -1,7 +1,7 @@
 
 import discord
-from apirequest import get_ohlc_data, get_token_info, get_floor_info
-from utils import process_ohlc_data_and_generate_chart, send_token_info, get_token_name
+from apirequest import get_ohlc_data, get_token_info, get_floor_info, get_trade_info
+from utils import get_token_name_and_pool, process_ohlc_data_and_generate_chart, process_trades, send_token_info, get_token_name
 from discord.ext import commands
 import textwrap
 
@@ -30,6 +30,18 @@ async def token(ctx, token_address, network:str = 'eth'):
 
     if tokeninfo is not None:
         await send_token_info(ctx, tokeninfo)  # Send formatted token info
+    else:
+        await ctx.send("Error retrieving token information.")
+@commands.command(name='trades', help='Get information about a specific token')
+async def trades(ctx, token_address, network='eth', trade_volume_in_usd_greater_than='2000'):
+    tokeninfo = await get_token_info(token_address, network)
+    if tokeninfo:
+        token_name, token_pool = get_token_name_and_pool(tokeninfo)
+        trade_data= await get_trade_info(token_pool, trade_volume_in_usd_greater_than, network)
+        if trade_data:
+            await process_trades(trade_data, token_name, token_pool, ctx)
+        else:
+            await ctx.send("Error retrieving trade information.")
     else:
         await ctx.send("Error retrieving token information.")
 
