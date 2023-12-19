@@ -120,7 +120,33 @@ async def convert_block_to_timeframe(block_number):
     # Placeholder for the function that converts block numbers to human-readable timeframes
     # Implement the logic based on your blockchain data
     return "Human-readable Timeframe"
+async def process_wallet(walletinfo, wallet_address, ctx):
+    # Convert the list of dictionaries (walletinfo) to a DataFrame
+    df_wallet = pd.json_normalize(walletinfo)
 
+    # Sort by 'timestamp.last_trade' in descending order and take the top 10
+    df_wallet = df_wallet.sort_values(by='timestamp.last_trade', ascending=False).head(10)
+
+    # Now create the Discord embed
+    embed = discord.Embed(title=f"Recent Trades: {wallet_address}", color=0x00ff00)
+
+    for _, row in df_wallet.iterrows():
+        token_address = row['token_address']
+        token_symbol = row['token_symbol']
+        first_trade_block = row['timestamp.first_trade']
+        last_trade_block = row['timestamp.last_trade']
+        profit = row['total.profit']
+
+        embed.add_field(
+            name=f"Token: {token_symbol}",
+            value=(f"Token Address: {token_address}\n"
+                   f"Block of First Trade: {first_trade_block}\n"
+                   f"Block of Last Trade: {last_trade_block}\n"
+                   f"Total Profit (USD): ${float(profit):,.2f}\n"),
+            inline=False
+        )
+
+    await ctx.send(embed=embed)
 async def process_trades(trade_data, token_name, token_pool, ctx):
     # Load into a DataFrame
     df = pd.json_normalize(trade_data['data'])

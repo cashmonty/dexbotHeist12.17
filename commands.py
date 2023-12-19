@@ -1,7 +1,7 @@
 
 import discord
-from apirequest import get_ohlc_data, get_token_info, get_floor_info, get_trade_info
-from utils import get_token_name_and_pool, process_ohlc_data_and_generate_chart, process_trades, send_token_info, get_token_name
+from apirequest import get_ohlc_data, get_token_info, get_floor_info, get_trade_info, get_wallet_info
+from utils import get_token_name_and_pool, process_ohlc_data_and_generate_chart, process_trades, send_token_info, get_token_name, process_wallet
 from discord.ext import commands
 import textwrap
 
@@ -30,6 +30,14 @@ async def token(ctx, token_address, network:str = 'eth'):
 
     if tokeninfo is not None:
         await send_token_info(ctx, tokeninfo)  # Send formatted token info
+    else:
+        await ctx.send("Error retrieving token information.")
+@commands.command(name='wallet', help='Get information about a specific wallet')
+async def wallet(ctx, wallet_address):
+    walletinfo = await get_wallet_info(wallet_address)  # Fetch token info
+
+    if walletinfo is not None:
+        await process_wallet(walletinfo, wallet_address, ctx)  # Send formatted token info
     else:
         await ctx.send("Error retrieving token information.")
 @commands.command(name='trades', help='Get information about a specific token')

@@ -55,23 +55,21 @@ async def get_floor_info(ctx, slugdisplay):
         # Apply formatting to the 'buy now price'
         buy_now_price = stats.get("buyNowPrice", "N/A")
         if buy_now_price != "N/A":
-            buy_now_price = float(buy_now_price) * 1e-09
-            buy_now_price = f"{buy_now_price:,.2f}SOL"
+            buy_now_price = float(buy_now_price) * 1e-09  # Convert to SOL
+            buy_now_price = f"{buy_now_price:,.2f}SOL"    # Formatting to two decimal places
 
         floor_1h = stats.get("floor1h", "N/A")
         floor_24h = stats.get("floor24h", "N/A")
 
-        # Format Floor Change 24h
-        if floor_24h != "N/A":
-            floor_24h = float(floor_24h) * 100  # Converting to percentage
-            floor_24h = f"{floor_24h:.2f}SOL"   # Formatting to two decimal places
-
         # Format Floor Change 1h
         if floor_1h != "N/A":
-            floor_1h = float(floor_1h) * 100    # Moving decimal two places to the right
-            floor_1h = f"{floor_1h:.2f}SOL"     # Formatting to two decimal places
+            floor_1h = float(floor_1h)   # Keep the original value
+            floor_1h = f"{floor_1h:.2f}SOL"  # Formatting to two decimal places
 
-        # Your formatted values are now in floor_24h and floor_1h
+        # Format Floor Change 24h
+        if floor_24h != "N/A":
+            floor_24h = float(floor_24h)  # Keep the original value
+            floor_24h = f"{floor_24h:.2f}SOL"  # Formatting to two decimal places
 
 
         # Create embed with formatted prices
@@ -81,7 +79,7 @@ async def get_floor_info(ctx, slugdisplay):
         embed.add_field(name="Floor Change 1h", value=floor_1h, inline=False)
 
         await ctx.send(embed=embed)
-async def get_trade_info(token_pool, trade_volume_in_usd_greater_than='2000', network='eth'):
+async def get_trade_info(token_pool, trade_volume_in_usd_greater_than, network='eth'):
 
 
     url = f'https://api.geckoterminal.com/api/v2/networks/{network}/pools/{token_pool}/trades?trade_volume_in_usd_greater_than={trade_volume_in_usd_greater_than}'
@@ -98,7 +96,7 @@ async def get_trade_info(token_pool, trade_volume_in_usd_greater_than='2000', ne
                 print(f"Error fetching data with status code: {response.status}")
                 return None
     # Exception handling remains the same    
-async def get_token_info(token_address, network='eth'):
+async def get_token_info(token_address, network):
     url = f'https://api.geckoterminal.com/api/v2/networks/{network}/tokens/{token_address}/pools'
     params = {'page': 1}
     headers = {'Accept': 'application/json;version=20230302'}
@@ -111,7 +109,35 @@ async def get_token_info(token_address, network='eth'):
                 print(f"Error fetching data with status code: {response.status}")
                 return None
     # Exception handling remains the same
+async def get_wallet_info(wallet_address):
+    url = 'https://api.syve.ai/v1/wallet-api/latest-performance-per-token'
+    key = 'g3rt33RwSAceXr'
 
+
+    params = {
+        'key': key,
+        'wallet_address': wallet_address,
+
+    }
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, params=params) as response:
+                if response.status == 200:
+                    return await response.json()
+                    # Include token_name in the data returned
+                    
+                else:
+                    print(f"Error fetching data with status code: {response.status}")
+                    return None, None
+    except aiohttp.ClientError as e:
+        print(f"HTTP request error: {e}")
+        return None, None
+    except asyncio.TimeoutError as e:
+        print(f"Request timed out: {e}")
+        return None
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return None
 
 async def get_ohlc_data(token_address, interval, max_size='200'):
     url = 'https://api.syve.ai/v1/price/historical/ohlc'
