@@ -63,12 +63,12 @@ async def get_floor_info(ctx, slugdisplay):
         # Format Floor Change 1h
         if floor_1h != "N/A":
             floor_1h = float(floor_1h)   # Keep the original value
-            floor_1h = f"{floor_1h:.2f}SOL"  # Formatting to two decimal places
+            floor_1h = f"{floor_1h:.4f}SOL"  # Formatting to two decimal places
 
         # Format Floor Change 24h
         if floor_24h != "N/A":
             floor_24h = float(floor_24h)  # Keep the original value
-            floor_24h = f"{floor_24h:.2f}SOL"  # Formatting to two decimal places
+            floor_24h = f"{floor_24h:.4f}SOL"  # Formatting to two decimal places
 
 
         # Create embed with formatted prices
@@ -83,13 +83,14 @@ async def get_top_pools(ctx):
     headers = {'Accept': 'application/json;version=20230302'}
 
     async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=headers, params=params) as response:
+        async with session.get(url, headers=headers) as response:
             if response.status == 200:
                 return await response.json()
                 
             else:
                 print(f"Error fetching data with status code: {response.status}")
                 return None
+            
 async def get_trade_info(token_pool, trade_volume_in_usd_greater_than, network='eth'):
 
 

@@ -82,15 +82,15 @@ def get_token_name(token_data):
 
     return token_name
 
-def process_top_pools(toppoolinfo, ctx):
+def process_top_pools(toppoolinfo):
     # Assuming toppoolinfo is a dictionary containing the 'data' key with relevant information
     df_top_pools = pd.json_normalize(toppoolinfo['data']).head(10)
 
     for index, pool_info in df_top_pools.iterrows():
         pool_address = pool_info['id'].split('_')[1]  # Extract pool address from the id
         # Construct the message
-        message = (
-            f"Pool Name: {pool_info.get('attributes.name', 'N/A')}\n"
+        processed_data = (
+            f"Token Name: {pool_info.get('attributes.name', 'N/A')}\n"
             f"Pool Address: {pool_address}\n"
             f"Base Token Price USD: {format_currency(pool_info.get('attributes.base_token_price_usd'))}\n"
             f"Quote Token Price USD: {format_currency(pool_info.get('attributes.quote_token_price_usd'))}\n"
@@ -109,22 +109,30 @@ def process_top_pools(toppoolinfo, ctx):
         # Send message or add to an embed, depending on your use case
         return processed_data
 async def send_top_pools_info(ctx, toppoolinfo):
-    # Assuming toppoolinfo is a list of pools
-    for pool_info in toppoolinfo[:10]:  # Process only the first 10 pools
-        processed_data = await process_top_pools(pool_info)
+    df_top_pools = pd.json_normalize(toppoolinfo['data']).head(10)
+
+    for _, pool_info in df_top_pools.iterrows():
+        processed_data = process_top_pools(pool_info)
 
         # Create an embed for the message
-        embed = discord.Embed(title=processed_data["Pool Name"], color=0x0099ff)  # Customize the title and color
+        embed = discord.Embed(title=processed_data["Pool Name"], color=0x0099ff)
 
         # Add fields to the embed
-        embed.add_field(name="Pool Name", value=processed_data["Pool Name"], inline=False)
         embed.add_field(name="Pool Address", value=processed_data["Pool Address"], inline=False)
-        embed.add_field(name="Price", value=processed_data["Pool Address"], inline=False)
-        embed.add_field(name="FDV", value=processed_data["Pool Address"], inline=False)
-        embed.add_field(name="DEX", value=processed_data["Pool Address"], inline=False)
-        embed.add_field(name="Volume 1h", value=processed_data["Pool Address"], inline=False)
-        embed.add_field(name="Volume 24h", value=processed_data["Pool Address"], inline=False)
-        # Add other fields as required
+        embed.add_field(name="Base Token Price USD", value=processed_data["Base Token Price USD"], inline=True)
+        embed.add_field(name="Quote Token Price USD", value=processed_data["Quote Token Price USD"], inline=True)
+        embed.add_field(name="Fully Diluted Valuation (USD)", value=processed_data["Fully Diluted Valuation (USD)"], inline=False)
+        embed.add_field(name="Market Cap (USD)", value=processed_data["Market Cap (USD)"], inline=True)
+        embed.add_field(name="1H Price Change Percentage", value=processed_data["1H Price Change Percentage"], inline=True)
+        embed.add_field(name="24H Price Change Percentage", value=processed_data["24H Price Change Percentage"], inline=False)
+        embed.add_field(name="1H Volume (USD)", value=processed_data["1H Volume (USD)"], inline=True)
+        embed.add_field(name="24H Volume (USD)", value=processed_data["24H Volume (USD)"], inline=True)
+        embed.add_field(name="Reserve in USD", value=processed_data["Reserve in USD"], inline=False)
+        embed.add_field(name="Base Token ID", value=processed_data["Base Token ID"], inline=True)
+        embed.add_field(name="Quote Token ID", value=processed_data["Quote Token ID"], inline=True)
+        embed.add_field(name="DEX ID", value=processed_data["DEX ID"], inline=False)
+
+
 
         await ctx.send(embed=embed)
 def get_token_name_and_pool(tokeninfo):
