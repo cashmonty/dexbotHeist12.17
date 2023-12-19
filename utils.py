@@ -81,6 +81,52 @@ def get_token_name(token_data):
         token_name = 'Unknown Token'  # Default name if 'data' is empty or not present
 
     return token_name
+
+def process_top_pools(toppoolinfo, ctx):
+    # Assuming toppoolinfo is a dictionary containing the 'data' key with relevant information
+    df_top_pools = pd.json_normalize(toppoolinfo['data']).head(10)
+
+    for index, pool_info in df_top_pools.iterrows():
+        pool_address = pool_info['id'].split('_')[1]  # Extract pool address from the id
+        # Construct the message
+        message = (
+            f"Pool Name: {pool_info.get('attributes.name', 'N/A')}\n"
+            f"Pool Address: {pool_address}\n"
+            f"Base Token Price USD: {format_currency(pool_info.get('attributes.base_token_price_usd'))}\n"
+            f"Quote Token Price USD: {format_currency(pool_info.get('attributes.quote_token_price_usd'))}\n"
+            f"Fully Diluted Valuation (USD): {format_currency(pool_info.get('attributes.fdv_usd'))}\n"
+            f"Market Cap (USD): {format_currency(pool_info.get('attributes.market_cap_usd'))}\n"
+            f"1H Price Change Percentage: {format_percentage(pool_info.get('attributes.price_change_percentage.h1'))}\n"
+            f"24H Price Change Percentage: {format_percentage(pool_info.get('attributes.price_change_percentage.h24'))}\n"
+            f"1H Volume (USD): {format_currency(pool_info.get('attributes.volume_usd.h1'))}\n"
+            f"24H Volume (USD): {format_currency(pool_info.get('attributes.volume_usd.h24'))}\n"
+            f"Reserve in USD: {format_currency(pool_info.get('attributes.reserve_in_usd'))}\n"
+            f"Base Token ID: {pool_info.get('relationships.base_token.data.id', 'N/A')}\n"
+            f"Quote Token ID: {pool_info.get('relationships.quote_token.data.id', 'N/A')}\n"
+            f"DEX ID: {pool_info.get('relationships.dex.data.id', 'N/A')}\n"
+        )
+
+        # Send message or add to an embed, depending on your use case
+        return processed_data
+async def send_top_pools_info(ctx, toppoolinfo):
+    # Assuming toppoolinfo is a list of pools
+    for pool_info in toppoolinfo[:10]:  # Process only the first 10 pools
+        processed_data = await process_top_pools(pool_info)
+
+        # Create an embed for the message
+        embed = discord.Embed(title=processed_data["Pool Name"], color=0x0099ff)  # Customize the title and color
+
+        # Add fields to the embed
+        embed.add_field(name="Pool Name", value=processed_data["Pool Name"], inline=False)
+        embed.add_field(name="Pool Address", value=processed_data["Pool Address"], inline=False)
+        embed.add_field(name="Price", value=processed_data["Pool Address"], inline=False)
+        embed.add_field(name="FDV", value=processed_data["Pool Address"], inline=False)
+        embed.add_field(name="DEX", value=processed_data["Pool Address"], inline=False)
+        embed.add_field(name="Volume 1h", value=processed_data["Pool Address"], inline=False)
+        embed.add_field(name="Volume 24h", value=processed_data["Pool Address"], inline=False)
+        # Add other fields as required
+
+        await ctx.send(embed=embed)
 def get_token_name_and_pool(tokeninfo):
     # Check if 'data' is in the response and it has at least one item
     if 'data' in tokeninfo and len(tokeninfo['data']) > 0:

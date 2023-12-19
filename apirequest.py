@@ -7,10 +7,9 @@ import requests
 from utils import get_token_name_and_pool
 
 
-API_KEY = os.getenv('SYVE_API_KEY')
-
+SYVE_API_KEY = os.getenv('SYVE_API_KEY')
+tensorapikey = os.getenv('X-TENSOR-API-KEY')
 async def get_floor_info(ctx, slugdisplay):
-    api_key = 'd63f8020-97ac-4592-bf1f-962e19126eb6'
     url = 'https://api.tensor.so/graphql'
     query = """
         query ExampleQuery($slugsDisplay: [String!]) {
@@ -37,7 +36,7 @@ async def get_floor_info(ctx, slugdisplay):
     variables = {"slugsDisplay": slugdisplay}
     headers = {
         'Content-Type': 'application/json',
-        'X-TENSOR-API-KEY': api_key
+        'X-TENSOR-API-KEY': tensorapikey
     }
     response = requests.post(url, headers=headers, json={"query": query, "variables": variables})
 
@@ -79,6 +78,18 @@ async def get_floor_info(ctx, slugdisplay):
         embed.add_field(name="Floor Change 1h", value=floor_1h, inline=False)
 
         await ctx.send(embed=embed)
+async def get_top_pools(ctx):
+    url = f"https://api.geckoterminal.com/api/v2/networks/new_pools?include=include&page=1"
+    headers = {'Accept': 'application/json;version=20230302'}
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers, params=params) as response:
+            if response.status == 200:
+                return await response.json()
+                
+            else:
+                print(f"Error fetching data with status code: {response.status}")
+                return None
 async def get_trade_info(token_pool, trade_volume_in_usd_greater_than, network='eth'):
 
 
@@ -111,7 +122,7 @@ async def get_token_info(token_address, network):
     # Exception handling remains the same
 async def get_wallet_info(wallet_address):
     url = 'https://api.syve.ai/v1/wallet-api/latest-performance-per-token'
-    key = 'g3rt33RwSAceXr'
+    key = SYVE_API_KEY
 
 
     params = {
@@ -149,7 +160,7 @@ async def get_ohlc_data(token_address, interval, max_size='200'):
     fill = 'true'
     order = 'desc'
     volume = 'true'
-    key = 'g3rt33RwSAceXr'
+    key = SYVE_API_KEY
 
 
     params = {
