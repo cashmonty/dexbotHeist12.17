@@ -134,6 +134,7 @@ async def send_top_pools_info(ctx, toppoolinfo):
 
 
 
+
         await ctx.send(embed=embed)
 def get_token_name_and_pool(tokeninfo):
     # Check if 'data' is in the response and it has at least one item

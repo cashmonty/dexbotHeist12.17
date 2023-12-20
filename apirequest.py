@@ -78,10 +78,11 @@ async def get_floor_info(ctx, slugdisplay):
         embed.add_field(name="Floor Change 1h", value=floor_1h, inline=False)
 
         await ctx.send(embed=embed)
-async def get_top_pools(ctx):
-    url = f"https://api.geckoterminal.com/api/v2/networks/new_pools?include=include&page=1"
-    headers = {'Accept': 'application/json;version=20230302'}
 
+async def get_top_pools(network):
+    url = f"https://api.geckoterminal.com/api/v2/networks/{network}pools?include=include&page=1"
+    headers = {'Accept': 'application/json;version=20230302'}
+    
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=headers) as response:
             if response.status == 200:
@@ -92,8 +93,6 @@ async def get_top_pools(ctx):
                 return None
             
 async def get_trade_info(token_pool, trade_volume_in_usd_greater_than, network='eth'):
-
-
     url = f'https://api.geckoterminal.com/api/v2/networks/{network}/pools/{token_pool}/trades?trade_volume_in_usd_greater_than={trade_volume_in_usd_greater_than}'
 
     params = {'page': 1}

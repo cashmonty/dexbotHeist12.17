@@ -33,8 +33,8 @@ async def token(ctx, token_address, network:str = 'eth'):
     else:
         await ctx.send("Error retrieving token information.")
 @commands.command(name='toppools', help='Get information about a specific wallet')
-async def toppools(ctx):
-    toppoolinfo = await get_top_pools(ctx)  # Fetch token info
+async def toppools(ctx, network='eth'):
+    toppoolinfo = await get_top_pools(network)  # Fetch token info
 
     if toppoolinfo is not None:
         await send_top_pools_info(ctx, toppoolinfo)
