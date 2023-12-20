@@ -82,32 +82,30 @@ def get_token_name(token_data):
 
     return token_name
 
-def process_top_pools(toppoolinfo):
-    # Assuming toppoolinfo is a dictionary containing the 'data' key with relevant information
-    df_top_pools = pd.json_normalize(toppoolinfo['data']).head(10)
+def process_top_pools(pool_info):
+    # Extract pool attributes and relationships
+    attributes = pool_info.get('attributes', {})
+    relationships = pool_info.get('relationships', {})
 
-    for index, pool_info in df_top_pools.iterrows():
-        pool_address = pool_info['id'].split('_')[1]  # Extract pool address from the id
-        # Construct the message
-        processed_data = (
-            f"Token Name: {pool_info.get('attributes.name', 'N/A')}\n"
-            f"Pool Address: {pool_address}\n"
-            f"Base Token Price USD: {format_currency(pool_info.get('attributes.base_token_price_usd'))}\n"
-            f"Quote Token Price USD: {format_currency(pool_info.get('attributes.quote_token_price_usd'))}\n"
-            f"Fully Diluted Valuation (USD): {format_currency(pool_info.get('attributes.fdv_usd'))}\n"
-            f"Market Cap (USD): {format_currency(pool_info.get('attributes.market_cap_usd'))}\n"
-            f"1H Price Change Percentage: {format_percentage(pool_info.get('attributes.price_change_percentage.h1'))}\n"
-            f"24H Price Change Percentage: {format_percentage(pool_info.get('attributes.price_change_percentage.h24'))}\n"
-            f"1H Volume (USD): {format_currency(pool_info.get('attributes.volume_usd.h1'))}\n"
-            f"24H Volume (USD): {format_currency(pool_info.get('attributes.volume_usd.h24'))}\n"
-            f"Reserve in USD: {format_currency(pool_info.get('attributes.reserve_in_usd'))}\n"
-            f"Base Token ID: {pool_info.get('relationships.base_token.data.id', 'N/A')}\n"
-            f"Quote Token ID: {pool_info.get('relationships.quote_token.data.id', 'N/A')}\n"
-            f"DEX ID: {pool_info.get('relationships.dex.data.id', 'N/A')}\n"
-        )
+    # Construct and return the processed data as a dictionary
+    processed_data = {
+        "Pool Name": attributes.get('name', 'N/A'),
+        "Pool Address": attributes.get('address', 'N/A'),
+        "Base Token Price USD": format_currency(attributes.get('base_token_price_usd', 'N/A')),
+        "Quote Token Price USD": format_currency(attributes.get('quote_token_price_usd', 'N/A')),
+        "Fully Diluted Valuation (USD)": format_currency(attributes.get('fdv_usd', 'N/A')),
+        "Market Cap (USD)": format_currency(attributes.get('market_cap_usd', 'N/A')),
+        "1H Price Change Percentage": format_percentage(attributes.get('price_change_percentage', {}).get('h1', 'N/A')),
+        "24H Price Change Percentage": format_percentage(attributes.get('price_change_percentage', {}).get('h24', 'N/A')),
+        "1H Volume (USD)": format_currency(attributes.get('volume_usd', {}).get('h1', 'N/A')),
+        "24H Volume (USD)": format_currency(attributes.get('volume_usd', {}).get('h24', 'N/A')),
+        "Reserve in USD": format_currency(attributes.get('reserve_in_usd', 'N/A')),
+        "Base Token ID": relationships.get('base_token', {}).get('data', {}).get('id', 'N/A'),
+        "Quote Token ID": relationships.get('quote_token', {}).get('data', {}).get('id', 'N/A'),
+        "DEX ID": relationships.get('dex', {}).get('data', {}).get('id', 'N/A'),
+    }
 
-        # Send message or add to an embed, depending on your use case
-        return processed_data
+    return processed_data
 async def send_top_pools_info(ctx, toppoolinfo):
     df_top_pools = pd.json_normalize(toppoolinfo['data']).head(10)
 
