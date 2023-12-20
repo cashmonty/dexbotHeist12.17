@@ -127,7 +127,7 @@ def get_token_name_and_pool(token_data):
         # Get the 'name' attribute from the first item's 'attributes'
         token_name = token_data['data'][0]['attributes'].get('name', 'N/A')
         pool_address = token_data['data'][0]['attributes'].get('address', 'N/A')    
-        print(token_name, pool_address)    
+        print(token_name, token_address)    
     else:
         token_name = 'Unknown Token'  # Default name if 'data' is empty or not present
 
@@ -222,6 +222,7 @@ async def process_ohlc_data_and_generate_chart(ohlc_data, token_name, chart_type
     df['Timestamp'] = pd.to_datetime(df['Timestamp'], unit='s')  # assuming the timestamp is in seconds
     df.set_index('Timestamp', inplace=True)
 
+    df.sort_index(ascending=True, inplace=True)
 
     Q1_high = df['High'].quantile(0.25)
     Q3_high = df['High'].quantile(0.75)
