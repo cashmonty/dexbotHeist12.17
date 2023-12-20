@@ -64,11 +64,12 @@ async def trades(ctx, token_address, network='eth', trade_volume_in_usd_greater_
 
 
 @commands.command(name='chart', help='Generate a simple candlestick chart for a given token and interval')
-async def chart(ctx, token_address: str, interval: str = '1h', max_size: str = '100'):
+async def chart(ctx, token_address: str, network: str = 'eth', timeframe: str = 'hour', aggregate='1', limit: str = '200'):
     try:
-        token_data = await get_token_info(token_address, network='eth')
-        token_name, token_address = get_token_name_and_pool(token_data)
-        ohlc_data = await get_ohlc_data(token_address, interval, max_size)
+
+        token_data = await get_token_info(token_address, network)
+        token_name, pool_address = get_token_name_and_pool(token_data)
+        ohlc_data = await get_ohlc_data(pool_address, network, timeframe, aggregate, limit)
         
         if ohlc_data is not None:
             chart_file = await process_ohlc_data_and_generate_chart(ohlc_data, token_name, 'default')
@@ -78,16 +79,17 @@ async def chart(ctx, token_address: str, interval: str = '1h', max_size: str = '
     except Exception as e:
         await ctx.send(f"An error occurred: {e}")
 
+        await ctx.send(f"An error occurred: {e}")
+
 
 @commands.command(name='chartichi', help='Generate a simple candlestick chart for a given token and interval')
-async def chartichi(ctx, token_address: str, interval: str = '1h', max_size: str = '100'):
+async def chartichi(ctx, token_address: str, network: str = 'eth', timeframe: str = 'hour', aggregate='1', limit: str = '200'):
     try:
-        token_data = await get_token_info(token_address, network='eth')
-        token_name, token_address = get_token_name_and_pool(token_data)
-        ohlc_data = await get_ohlc_data(token_address, interval, max_size)
+        token_data = await get_token_info(token_address, network)
+        token_name, pool_address = get_token_name_and_pool(token_data)
+        ohlc_data = await get_ohlc_data(pool_address, network, timeframe, aggregate, limit)
         
         if ohlc_data is not None:
-            token_name = get_token_name(token_data)  # Removed await
             chart_file = await process_ohlc_data_and_generate_chart(ohlc_data, token_name, 'ichimoku')
             await ctx.send(file=discord.File(chart_file))
         else:
@@ -96,14 +98,13 @@ async def chartichi(ctx, token_address: str, interval: str = '1h', max_size: str
         await ctx.send(f"An error occurred: {e}")
 
 @commands.command(name='chartdonchian', help='Generate a simple candlestick chart for a given token and interval')
-async def chartdonchian(ctx, token_address: str, interval: str = '1h', max_size: str = '100'):
+async def chartdonchian(ctx, token_address: str, network: str = 'eth', timeframe: str = 'hour', aggregate='1', limit: str = '200'):
     try:
-        token_data = await get_token_info(token_address, network='eth')
-        token_name, token_address = get_token_name_and_pool(token_data)
-        ohlc_data = await get_ohlc_data(token_address, interval, max_size)
+        token_data = await get_token_info(token_address, network)
+        token_name, pool_address = get_token_name_and_pool(token_data)
+        ohlc_data = await get_ohlc_data(pool_address, network, timeframe, aggregate, limit)
         
         if ohlc_data is not None:
-            token_name = get_token_name(token_data)  # Removed await
             chart_file = await process_ohlc_data_and_generate_chart(ohlc_data, token_name, 'donchian')
             await ctx.send(file=discord.File(chart_file))
         else:

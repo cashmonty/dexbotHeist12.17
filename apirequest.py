@@ -153,31 +153,14 @@ async def get_wallet_info(wallet_address):
         print(f"Unexpected error: {e}")
         return None
 
-async def get_ohlc_data(token_address, interval, max_size='200'):
-    url = 'https://api.syve.ai/v1/price/historical/ohlc'
+async def get_ohlc_data(pool_address, network='eth', timeframe='hour', aggregate='1', limit='200'):
+    # Constructing the URL with path parameters
+    url = f'https://api.geckoterminal.com/api/v2/networks/{network}/pools/{pool_address}/ohlcv/{timeframe}'
 
-    pool_address = 'all'  # default to consider all pools
-    price_type = 'price_token_usd_robust_tick_1'  # default price type
-    from_timestamp = 0  # default
-    until_timestamp = int(datetime.datetime.now().timestamp())  # current timestamp
-    fill = 'true'
-    order = 'desc'
-    volume = 'true'
-    key = SYVE_API_KEY
-
-
+    # Setting up the query parameters
     params = {
-        'key': key,
-        'token_address': token_address,
-        'pool_address': pool_address,
-        'price_type': price_type,
-        'interval': interval,
-        'from_timestamp': from_timestamp,
-        'until_timestamp': until_timestamp,
-        'max_size': max_size,
-        'order': order,
-        'fill': fill,
-        'with_volume': volume
+        'aggregate': aggregate,
+        'limit': limit
     }
 
     try:
@@ -185,14 +168,12 @@ async def get_ohlc_data(token_address, interval, max_size='200'):
             async with session.get(url, params=params) as response:
                 if response.status == 200:
                     return await response.json()
-                    # Include token_name in the data returned
-                    
                 else:
                     print(f"Error fetching data with status code: {response.status}")
-                    return None, None
+                    return None
     except aiohttp.ClientError as e:
         print(f"HTTP request error: {e}")
-        return None, None
+        return None
     except asyncio.TimeoutError as e:
         print(f"Request timed out: {e}")
         return None

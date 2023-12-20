@@ -126,12 +126,12 @@ def get_token_name_and_pool(token_data):
     if 'data' in token_data and len(token_data['data']) > 0:
         # Get the 'name' attribute from the first item's 'attributes'
         token_name = token_data['data'][0]['attributes'].get('name', 'N/A')
-        token_address = token_data['data'][0]['attributes'].get('address', 'N/A')    
-        print(token_name, token_address)    
+        pool_address = token_data['data'][0]['attributes'].get('address', 'N/A')    
+        print(token_name, pool_address)    
     else:
         token_name = 'Unknown Token'  # Default name if 'data' is empty or not present
 
-    return token_name, token_address
+    return token_name, pool_address
 async def process_token_info(tokeninfo):
     df_pools = pd.json_normalize(tokeninfo['data'])
     pools_data = df_pools.set_index(df_pools['id'].apply(lambda x: x.split('_')[1])).to_dict('index')
@@ -214,18 +214,14 @@ async def process_trades(trade_data, token_name, token_pool, ctx):
 
     await ctx.send(embed=embed)
 async def process_ohlc_data_and_generate_chart(ohlc_data, token_name, chart_type):
-    df = pd.DataFrame(ohlc_data['data'])
-    df['date_open'] = pd.to_datetime(df['date_open'])
-    df.set_index('date_open', inplace=True)
-    df.sort_index(ascending=True, inplace=True)
-    # Renaming columns to match mplfinance requirements
-    df.rename(columns={
-        'price_open': 'Open',
-        'price_high': 'High',
-        'price_low': 'Low',
-        'price_close': 'Close',
-        'volume_1h_usd': 'Volume'
-    }, inplace=True)
+    # Extract OHLCV data
+    ohlcv_list = ohlc_data['data']['attributes']['ohlcv_list']
+    
+    # Create DataFrame
+    df = pd.DataFrame(ohlcv_list, columns=['Timestamp', 'Open', 'High', 'Low', 'Close', 'Volume'])
+    df['Timestamp'] = pd.to_datetime(df['Timestamp'], unit='s')  # assuming the timestamp is in seconds
+    df.set_index('Timestamp', inplace=True)
+
 
     Q1_high = df['High'].quantile(0.25)
     Q3_high = df['High'].quantile(0.75)
