@@ -80,9 +80,9 @@ async def get_floor_info(ctx, slugdisplay):
         await ctx.send(embed=embed)
 
 async def get_top_pools(network):
-    url = f"https://api.geckoterminal.com/api/v2/networks/{network}pools?include=include&page=1"
+    url = f"https://api.geckoterminal.com/api/v2/networks/{network}/pools?include=include&page=1"
     headers = {'Accept': 'application/json;version=20230302'}
-    
+
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=headers) as response:
             if response.status == 200:
