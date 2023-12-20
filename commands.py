@@ -67,10 +67,10 @@ async def trades(ctx, token_address, network='eth', trade_volume_in_usd_greater_
 async def chart(ctx, token_address: str, interval: str = '1h', max_size: str = '100'):
     try:
         token_data = await get_token_info(token_address, network='eth')
+        token_name, token_address = get_token_name_and_pool(token_data)
         ohlc_data = await get_ohlc_data(token_address, interval, max_size)
         
         if ohlc_data is not None:
-            token_name = get_token_name(token_data)  # Removed await
             chart_file = await process_ohlc_data_and_generate_chart(ohlc_data, token_name, 'default')
             await ctx.send(file=discord.File(chart_file))
         else:
@@ -83,6 +83,7 @@ async def chart(ctx, token_address: str, interval: str = '1h', max_size: str = '
 async def chartichi(ctx, token_address: str, interval: str = '1h', max_size: str = '100'):
     try:
         token_data = await get_token_info(token_address, network='eth')
+        token_name, token_address = get_token_name_and_pool(token_data)
         ohlc_data = await get_ohlc_data(token_address, interval, max_size)
         
         if ohlc_data is not None:
@@ -98,6 +99,7 @@ async def chartichi(ctx, token_address: str, interval: str = '1h', max_size: str
 async def chartdonchian(ctx, token_address: str, interval: str = '1h', max_size: str = '100'):
     try:
         token_data = await get_token_info(token_address, network='eth')
+        token_name, token_address = get_token_name_and_pool(token_data)
         ohlc_data = await get_ohlc_data(token_address, interval, max_size)
         
         if ohlc_data is not None:

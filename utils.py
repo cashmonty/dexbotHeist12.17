@@ -121,17 +121,17 @@ async def send_top_pools_info(ctx, toppoolinfo):
 
 
         await ctx.send(embed=embed)
-def get_token_name_and_pool(tokeninfo):
+def get_token_name_and_pool(token_data):
     # Check if 'data' is in the response and it has at least one item
-    if 'data' in tokeninfo and len(tokeninfo['data']) > 0:
+    if 'data' in token_data and len(token_data['data']) > 0:
         # Get the 'name' attribute from the first item's 'attributes'
-        token_name = tokeninfo['data'][0]['attributes'].get('name', 'N/A')
-        token_pool = tokeninfo['data'][0]['attributes'].get('address', 'N/A')    
-        print(token_name, token_pool)    
+        token_name = token_data['data'][0]['attributes'].get('name', 'N/A')
+        token_address = token_data['data'][0]['attributes'].get('address', 'N/A')    
+        print(token_name, token_address)    
     else:
         token_name = 'Unknown Token'  # Default name if 'data' is empty or not present
 
-    return token_name, token_pool
+    return token_name, token_address
 async def process_token_info(tokeninfo):
     df_pools = pd.json_normalize(tokeninfo['data'])
     pools_data = df_pools.set_index(df_pools['id'].apply(lambda x: x.split('_')[1])).to_dict('index')
