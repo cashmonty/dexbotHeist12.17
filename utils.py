@@ -54,7 +54,7 @@ async def send_token_info(ctx, tokeninfo):
     processed_data = await process_token_info(tokeninfo)
 
     # Create an embed for the message
-    embed = discord.Embed(title=processed_data["Pool Name"], color=0x0099ff)  # Customize the title and color
+    embed = discord.Embed(title=processed_data["Token Name"], color=0x0099ff)  # Customize the title and color
 
     # Add fields to the embed
     embed.add_field(name="Token Address", value=processed_data["Token Address"], inline=False)
