@@ -80,22 +80,13 @@ def get_token_name(token_data):
 
 def process_top_pools(pool_info):
     attributes = pool_info.get('attributes', {})
-    relationships = pool_info.get('relationships', {})
 
     processed_data = {
         "Token Name": pool_info.get('attributes.name', 'N/A'),
         "Token Address": pool_info.get('id'),
         "Base Token Price USD": attributes.get('base_token_price_usd'),
-        "Quote Token Price USD": format_currency(attributes.get('quote_token_price_usd')),
         "Fully Diluted Valuation (USD)": format_currency(attributes.get('fdv_usd')),
-        "1H Price Change Percentage": format_percentage(attributes.get('price_change_percentage', {}).get('h1')),
-        "24H Price Change Percentage": format_percentage(attributes.get('price_change_percentage', {}).get('h24')),
-        "1H Volume (USD)": format_currency(attributes.get('volume_usd', {}).get('h1')),
-        "24H Volume (USD)": format_currency(attributes.get('volume_usd', {}).get('h24')),
-        "Reserve in USD": format_currency(attributes.get('reserve_in_usd')),
-        "Base Token ID": relationships.get('base_token', {}).get('data', {}).get('id', 'N/A'),
-        "Quote Token ID": relationships.get('base_token', {}).get('data', {}).get('id', 'N/A'),
-        "DEX ID": relationships.get('dex', {}).get('data', {}).get('id', 'N/A')
+        "1H Price Change Percentage": format_percentage(attributes.get('price_change_percentage', {}).get('h1'))
     }
 
     return processed_data
@@ -104,15 +95,25 @@ async def send_top_pools_info(ctx, toppoolinfo):
         await ctx.send("No pool data available.")
         return
 
-    for pool_info in toppoolinfo['data'][:10]:  # Process only the first 10 pools
+    # Initialize an empty list to hold all embeds
+    embeds = []
+
+    # Process only the first 10 pools
+    for pool_info in toppoolinfo['data'][:10]:
         processed_data = process_top_pools(pool_info)
-        # Create an embed for the message
+
+        # Create an embed for the pool
         embed = discord.Embed(title=processed_data["Token Name"], color=0x0099ff)
         for key, value in processed_data.items():
+            # Ensure value is a string and not too long for an embed field
+            value = str(value)[:1024] if value else 'N/A'
             embed.add_field(name=key, value=value, inline=False)
-        # Add fields to the embed
 
+        # Add the completed embed for this pool to the list
+        embeds.append(embed)
 
+    # Send all embeds in one message
+    await ctx.send(embeds=embeds)
 
 
     await ctx.send(embed=embed)
