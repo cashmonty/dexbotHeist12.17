@@ -57,18 +57,14 @@ async def send_token_info(ctx, tokeninfo):
     embed = discord.Embed(title=processed_data["Pool Name"], color=0x0099ff)  # Customize the title and color
 
     # Add fields to the embed
-    embed.add_field(name="Pool Address", value=processed_data["Pool Address"], inline=False)
+    embed.add_field(name="Token Address", value=processed_data["Token Address"], inline=False)
     embed.add_field(name="Base Token Price USD", value=processed_data["Base Token Price USD"], inline=True)
-    embed.add_field(name="Quote Token Price USD", value=processed_data["Quote Token Price USD"], inline=True)
+
     embed.add_field(name="Fully Diluted Valuation (USD)", value=processed_data["Fully Diluted Valuation (USD)"], inline=False)
-    embed.add_field(name="Market Cap (USD)", value=processed_data["Market Cap (USD)"], inline=True)
+
     embed.add_field(name="1H Price Change Percentage", value=processed_data["1H Price Change Percentage"], inline=True)
     embed.add_field(name="24H Price Change Percentage", value=processed_data["24H Price Change Percentage"], inline=False)
-    embed.add_field(name="1H Volume (USD)", value=processed_data["1H Volume (USD)"], inline=True)
-    embed.add_field(name="24H Volume (USD)", value=processed_data["24H Volume (USD)"], inline=True)
-    embed.add_field(name="Reserve in USD", value=processed_data["Reserve in USD"], inline=False)
-    embed.add_field(name="Base Token ID", value=processed_data["Base Token ID"], inline=True)
-    embed.add_field(name="Quote Token ID", value=processed_data["Quote Token ID"], inline=True)
+
     embed.add_field(name="DEX ID", value=processed_data["DEX ID"], inline=False)
 
     await ctx.send(embed=embed)
@@ -87,9 +83,9 @@ def process_top_pools(pool_info):
     relationships = pool_info.get('relationships', {})
 
     processed_data = {
-        "Pool Name": attributes.get('name', 'N/A'),
-        "Pool Address": attributes.get('address', 'N/A'),
-        "Base Token Price USD": format_currency(attributes.get('base_token_price_usd')),
+        "Token Name": pool_info.get('attributes.name', 'N/A'),
+        "Token Address": pool_info.get('id'),
+        "Base Token Price USD": attributes.get('base_token_price_usd'),
         "Quote Token Price USD": format_currency(attributes.get('quote_token_price_usd')),
         "Fully Diluted Valuation (USD)": format_currency(attributes.get('fdv_usd')),
         "1H Price Change Percentage": format_percentage(attributes.get('price_change_percentage', {}).get('h1')),
@@ -110,7 +106,6 @@ async def send_top_pools_info(ctx, toppoolinfo):
 
     for pool_info in toppoolinfo['data'][:10]:  # Process only the first 10 pools
         processed_data = process_top_pools(pool_info)
-
         # Create an embed for the message
         embed = discord.Embed(title=processed_data["Pool Name"], color=0x0099ff)
         for key, value in processed_data.items():
@@ -120,7 +115,7 @@ async def send_top_pools_info(ctx, toppoolinfo):
 
 
 
-        await ctx.send(embed=embed)
+    await ctx.send(embed=embed)
 def get_token_name_and_pool(token_data):
     # Check if 'data' is in the response and it has at least one item
     if 'data' in token_data and len(token_data['data']) > 0:
@@ -136,12 +131,12 @@ async def process_token_info(tokeninfo):
     df_pools = pd.json_normalize(tokeninfo['data'])
     pools_data = df_pools.set_index(df_pools['id'].apply(lambda x: x.split('_')[1])).to_dict('index')
     
-    pool_address, pool_info = next(iter(pools_data.items()))
+    pool_info = next(iter(pools_data.items()))
 
     data_to_display = {
-        "Pool Name": pool_info.get('attributes.name', 'N/A'),
-        "Pool Address": pool_address,
-        "Base Token Price USD": format_currency(pool_info.get('attributes.base_token_price_usd')),
+        "Token Name": pool_info.get('attributes.name', 'N/A'),
+        "Token Address": pool_info.get('id'),
+        "Base Token Price USD": pool_info.get('attributes.base_token_price_usd'),
         "Quote Token Price USD": format_currency(pool_info.get('attributes.quote_token_price_usd')),
         "Fully Diluted Valuation (USD)": format_currency(pool_info.get('attributes.fdv_usd')),
         "Market Cap (USD)": format_currency(pool_info.get('attributes.market_cap_usd')),
