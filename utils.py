@@ -81,8 +81,11 @@ def get_token_name(token_data):
 def process_top_pools(pool_info):
     attributes = pool_info.get('attributes', {})
 
+    # Correctly extracting the 'name' from the 'attributes' dictionary
+    token_name = attributes.get('name', 'N/A')
+
     processed_data = {
-        "Token Name": pool_info.get('attributes.name', 'N/A'),
+        "Token Name": token_name,
         "Token Address": pool_info.get('id'),
         "Base Token Price USD": attributes.get('base_token_price_usd'),
         "Fully Diluted Valuation (USD)": format_currency(attributes.get('fdv_usd')),
