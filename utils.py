@@ -107,7 +107,7 @@ async def send_top_pools_info(ctx, toppoolinfo):
     for pool_info in toppoolinfo['data'][:10]:  # Process only the first 10 pools
         processed_data = process_top_pools(pool_info)
         # Create an embed for the message
-        embed = discord.Embed(title=processed_data["Pool Name"], color=0x0099ff)
+        embed = discord.Embed(title=processed_data["Token Name"], color=0x0099ff)
         for key, value in processed_data.items():
             embed.add_field(name=key, value=value, inline=False)
         # Add fields to the embed
