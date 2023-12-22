@@ -2,7 +2,40 @@ import pandas as pd
 import mplfinance as mpf
 import discord
 
+def create_custom_style():
+    # Define market colors for up and down candles
+    mc = mpf.make_marketcolors(
+        up='lightgreen', down='lightcoral',
+        edge='inherit', wick='inherit',
+        volume='in', ohlc='i'
+    )
 
+    # Create and return the style
+    s = mpf.make_mpf_style(
+        marketcolors=mc,
+        facecolor='black',
+        figcolor='white',
+        gridcolor='black',
+    )
+    return s
+def add_fibonacci_retracement_levels(high, low):
+    # Define Fibonacci levels and their corresponding colors
+    fib_levels = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1]
+    fib_colors = ['#FFD700', '#FF4500', '#8A2BE2', '#20B2AA', '#FF6347', '#00FA9A', '#4682B4']
+
+    # Calculate retracement levels based on high and low prices
+    retracement_levels = [low + (high - low) * level for level in fib_levels]
+
+    # Prepare the hlines parameter for mplfinance plot
+    hlines_params = {
+        'hlines': retracement_levels,
+        'colors': fib_colors,
+        'linestyle': '--',
+        'linewidths': 2,
+        'alpha': 0.7
+    }
+
+    return hlines_params
 def calculate_ichimoku(df):
     # Calculate Ichimoku Cloud components
     high_9 = df['High'].rolling(window=9).max()
@@ -22,22 +55,7 @@ def calculate_ichimoku(df):
     df['Chikou_Span'] = df['Close'].shift(periods=-26)
 
     return df
-def create_custom_style():
-    # Define market colors for up and down candles
-    mc = mpf.make_marketcolors(
-        up='lightgreen', down='lightcoral',
-        edge='inherit', wick='inherit',
-        volume='in', ohlc='i'
-    )
 
-    # Create a custom style
-    s = mpf.make_mpf_style(
-        marketcolors=mc, 
-        facecolor='black',  # Background color of the chart
-        figcolor='white',   # Color of the area around the chart
-        gridcolor='black',   # Grid color (set to 'black' or '' to hide)
-    )
-    return s
 def format_currency(value):
     try:
         return "${:,.2f}".format(float(value))
@@ -238,7 +256,26 @@ async def process_ohlc_data_and_generate_chart(ohlc_data, token_name, chart_type
 
     custom_style = create_custom_style()
     
+    if chart_type == 'fibonacci':
+        high_price = df['High'].max()
+        low_price = df['Low'].min()
 
+        # Generate the hlines parameters for the Fibonacci levels
+        fib_hlines = add_fibonacci_retracement_levels(high_price, low_price)
+
+        mpf.plot(
+            df_filtered, 
+            type='candle', 
+            style=custom_style, 
+            volume=True, 
+            hlines=fib_hlines,
+            savefig="fibonacci_chart.png"  # Save the figure directly
+        )
+
+
+        return "fibonacci_chart.png"
+
+ 
     if chart_type == 'ichimoku':
         # Calculate the Ichimoku Cloud on the data
         df_filtered = calculate_ichimoku(df)
@@ -302,6 +339,7 @@ async def process_ohlc_data_and_generate_chart(ohlc_data, token_name, chart_type
             savefig='donchian_chart.png'
         )
         return 'donchian_chart.png'
+
     else:
         title = f'Chart for {token_name}'
         # Default candlestick plot

@@ -111,3 +111,23 @@ async def chartdonchian(ctx, token_address: str, network: str = 'eth', timeframe
             await ctx.send("Failed to fetch OHLC data.")
     except Exception as e:
         await ctx.send(f"An error occurred: {e}")
+@commands.command(name='chartfib', help='Generate a candlestick chart with Fibonacci retracement levels for a given token and interval')
+async def chartfib(ctx, token_address: str, network: str = 'eth', timeframe: str = 'hour', aggregate='1', limit: str = '200'):
+    try:
+        # Fetch token data
+        token_data = await get_token_info(token_address, network)
+        token_name, pool_address = get_token_name_and_pool(token_data)
+
+        # Fetch OHLC data
+        ohlc_data = await get_ohlc_data(pool_address, network, timeframe, aggregate, limit)
+        
+        if ohlc_data is not None:
+
+            chart_file = await process_ohlc_data_and_generate_chart(ohlc_data, token_name, 'fibonacci')
+            
+            # Send the chart as a file in the Discord message
+            await ctx.send(file=discord.File(chart_file))
+        else:
+            await ctx.send("Failed to fetch OHLC data.")
+    except Exception as e:
+        await ctx.send(f"An error occurred: {e}")
