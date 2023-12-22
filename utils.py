@@ -262,9 +262,10 @@ async def process_ohlc_data_and_generate_chart(ohlc_data, token_name, chart_type
 
         # Generate the hlines parameters for the Fibonacci levels
         fib_hlines = add_fibonacci_retracement_levels(high_price, low_price)
-
+        title = f'Chart for {token_name}'
         mpf.plot(
-            df_filtered, 
+            df_filtered,
+            title=title, 
             type='candle', 
             style=custom_style, 
             volume=True, 
