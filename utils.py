@@ -1,7 +1,8 @@
 import pandas as pd
 import mplfinance as mpf
 import discord
-from mplfinance._mplrcputils import rcParams_to_df
+import matplotlib.pyplot as plt
+
 
 def create_custom_style():
     # Define market colors for up and down candles
@@ -16,7 +17,22 @@ def create_custom_style():
 
 
     return base_style
-def add_fibonacci_retracement_levels(high, low):
+def add_fibonacci_retracement_levels(ax, high, low):
+    # Define Fibonacci levels and their corresponding colors
+    fib_levels = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1]
+    fib_colors = ['#FFD700', '#FF4500', '#8A2BE2', '#20B2AA', '#FF6347', '#00FA9A', '#4682B4']
+
+    # Calculate retracement levels based on high and low prices
+    retracement_levels = [low + (high - low) * level for level in fib_levels]
+
+    # Plot each Fibonacci level with its color as a solid line and add the price text
+    for level, color, retracement in zip(fib_levels, fib_colors, retracement_levels):
+        ax.axhline(y=retracement, color=color, linestyle='-', linewidth=2, alpha=0.7)
+        ax.text(0.98, retracement, f'{level:.3f} ({retracement:.2f})', 
+                verticalalignment='center', horizontalalignment='right', 
+                color=color, alpha=0.9, transform=ax.get_yaxis_transform())
+    return ax
+#def add_fibonacci_retracement_levels(high, low):
     # Define Fibonacci levels and their corresponding colors
     fib_levels = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1]
     fib_colors = ['#FFD700', '#FF4500', '#8A2BE2', '#20B2AA', '#FF6347', '#00FA9A', '#4682B4']
@@ -255,25 +271,22 @@ async def process_ohlc_data_and_generate_chart(ohlc_data, token_name, chart_type
     custom_style = create_custom_style()
     
     if chart_type == 'fibonacci':
-        high_price = df['High'].max()
-        low_price = df['Low'].min()
-
-        # Generate the hlines parameters for the Fibonacci levels
-        fib_hlines = add_fibonacci_retracement_levels(high_price, low_price)
+        high_price = df_filtered['High'].max()
+        low_price = df_filtered['Low'].min()
         title = f'Chart for {token_name}'
-        mpf.plot(
-            df_filtered,
-            title=title, 
-            type='candle', 
-            style=custom_style, 
-            volume=True, 
-            hlines=fib_hlines,
-            savefig="fibonacci_chart.png"  # Save the figure directly
-        )
+        # Plot the initial chart and get the Axes object (or list of objects)
+        fig, ax = mpf.plot(df_filtered, type='candle', style=custom_style, title=title, volume=True, returnfig=True)
 
+        # Ensure ax is the primary Axes object, not a list
+        primary_ax = ax[0] if isinstance(ax, list) else ax
 
-        return "fibonacci_chart.png"
+        # Add Fibonacci retracement levels and annotations to the primary Axes
+        add_fibonacci_retracement_levels(primary_ax, high_price, low_price)
 
+        # Save the plot to a file
+        chart_file = "fibonacci_chart.png"
+        fig.savefig(chart_file)
+        return chart_file
  
     if chart_type == 'ichimoku':
         # Calculate the Ichimoku Cloud on the data
