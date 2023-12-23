@@ -11,17 +11,11 @@ def create_custom_style():
         volume='in', ohlc='i'
     )
     # Get the base style of 'nightclouds'
-    base_style = mpf.make_mpf_style(base_mpf_style='nightclouds')
+    base_style = mpf.make_mpf_style(base_mpf_style='nightclouds', marketcolors=mc, gridcolor='black')
 
-    # Update the base style's market colors with your custom settings
-    base_style['marketcolors'].update(mc)
-    # Create and return the style
-    s = mpf.make_mpf_style(
-        marketcolors=mc,
-        facecolor='black',
-        gridcolor='black',
-    )
-    return s
+
+
+    return base_style
 def add_fibonacci_retracement_levels(high, low):
     # Define Fibonacci levels and their corresponding colors
     fib_levels = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1]
