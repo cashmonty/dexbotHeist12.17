@@ -1,6 +1,7 @@
 import pandas as pd
 import mplfinance as mpf
 import discord
+from mplfinance._mplrcputils import rcParams_to_df
 
 def create_custom_style():
     # Define market colors for up and down candles
@@ -9,12 +10,15 @@ def create_custom_style():
         edge='inherit', wick='inherit',
         volume='in', ohlc='i'
     )
+    # Get the base style of 'nightclouds'
+    base_style = mpf.make_mpf_style(base_mpf_style='nightclouds')
 
+    # Update the base style's market colors with your custom settings
+    base_style['marketcolors'].update(mc)
     # Create and return the style
     s = mpf.make_mpf_style(
         marketcolors=mc,
         facecolor='black',
-        figcolor='white',
         gridcolor='black',
     )
     return s
