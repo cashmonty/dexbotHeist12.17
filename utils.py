@@ -18,38 +18,23 @@ def create_custom_style():
 
     return base_style
 def add_fibonacci_retracement_levels(ax, high, low):
-    # Define Fibonacci levels and their corresponding colors
-    fib_levels = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1]
-    fib_colors = ['#FFD700', '#FF4500', '#8A2BE2', '#20B2AA', '#FF6347', '#00FA9A', '#4682B4']
+    # Define inverted Fibonacci levels for retracement (from high to low)
+    fib_levels = [1.0, 0.786, 0.618, 0.5, 0.382, 0.236, 0]
+    fib_colors = ['#4682B4', '#00FA9A', '#FF6347', '#20B2AA', '#8A2BE2', '#FF4500', '#FFD700']
+    
+    # Calculate inverted retracement levels based on high and low prices
+    retracement_levels = [high - (high - low) * level for level in fib_levels]
 
-    # Calculate retracement levels based on high and low prices
-    retracement_levels = [low + (high - low) * level for level in fib_levels]
-
-    # Plot each Fibonacci level with its color as a solid line and add the price text
+    # Plot each inverted Fibonacci level with its color as a solid line and add the price text
     for level, color, retracement in zip(fib_levels, fib_colors, retracement_levels):
         ax.axhline(y=retracement, color=color, linestyle='-', linewidth=2, alpha=0.7)
-        ax.text(0.98, retracement, f'{level:.3f} ({retracement:.2f})', 
+        # Position the text on the right, indicating the inverted Fibonacci level and price
+        ax.text(0.98, retracement, f'{(1-level):.3f} ({retracement:.2f})', 
                 verticalalignment='center', horizontalalignment='right', 
                 color=color, alpha=0.9, transform=ax.get_yaxis_transform())
     return ax
-#def add_fibonacci_retracement_levels(high, low):
-    # Define Fibonacci levels and their corresponding colors
-    fib_levels = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1]
-    fib_colors = ['#FFD700', '#FF4500', '#8A2BE2', '#20B2AA', '#FF6347', '#00FA9A', '#4682B4']
 
-    # Calculate retracement levels based on high and low prices
-    retracement_levels = [low + (high - low) * level for level in fib_levels]
 
-    # Prepare the hlines parameter for mplfinance plot
-    hlines_params = {
-        'hlines': retracement_levels,
-        'colors': fib_colors,
-        'linestyle': '--',
-        'linewidths': 2,
-        'alpha': 0.7
-    }
-
-    return hlines_params
 def calculate_ichimoku(df):
     # Calculate Ichimoku Cloud components
     high_9 = df['High'].rolling(window=9).max()
@@ -82,24 +67,38 @@ def format_percentage(value):
     except (ValueError, TypeError):
         return "N/A"
 
-async def send_token_info(ctx, tokeninfo):
-    processed_data = await process_token_info(tokeninfo)
+async def send_token_info(ctx, toppoolinfo):
+    if 'data' not in toppoolinfo or not toppoolinfo['data']:
+        await ctx.send("No pool data available.")
+        return
 
-    # Create an embed for the message
-    embed = discord.Embed(title=processed_data["Token Name"], color=0x0099ff)  # Customize the title and color
+    # Accessing only the first pool's data
+    first_pool_data = toppoolinfo['data'][0]
+    processed_data = process_top_pools(first_pool_data)
 
-    # Add fields to the embed
-    embed.add_field(name="Token Address", value=processed_data["Token Address"], inline=False)
-    embed.add_field(name="Base Token Price USD", value=processed_data["Base Token Price USD"], inline=True)
+    # Create an embed for the first pool
+    embed = discord.Embed(title=processed_data["Token Name"], color=0x0099ff)
+    for key, value in processed_data.items():
+        value = str(value)[:1024] if value else 'N/A'
+        embed.add_field(name=key, value=value, inline=False)
 
-    embed.add_field(name="Fully Diluted Valuation (USD)", value=processed_data["Fully Diluted Valuation (USD)"], inline=False)
-
-    embed.add_field(name="1H Price Change Percentage", value=processed_data["1H Price Change Percentage"], inline=True)
-    embed.add_field(name="24H Price Change Percentage", value=processed_data["24H Price Change Percentage"], inline=False)
-
-    embed.add_field(name="DEX ID", value=processed_data["DEX ID"], inline=False)
-
+    # Send the embed for the first pool
     await ctx.send(embed=embed)
+
+def process_top_pools(pool_data):
+    attributes = pool_data.get('attributes', {})
+    token_name = attributes.get('name', 'N/A')
+
+    processed_data = {
+        "Token Name": token_name,
+        "Token Address": pool_data.get('id'),
+        "Base Token Price USD": attributes.get('base_token_price_usd'),
+        "Fully Diluted Valuation (USD)": format_currency(attributes.get('fdv_usd')),
+        "1H Price Change Percentage": format_percentage(attributes.get('price_change_percentage', {}).get('h1'))
+    }
+    return processed_data
+
+# Ensure that format_currency and format_percentage functions are defined here.
 def get_token_name(token_data):
     # Check if 'data' is in the response and it has at least one item
     if 'data' in token_data and len(token_data['data']) > 0:
@@ -110,21 +109,6 @@ def get_token_name(token_data):
 
     return token_name
 
-def process_top_pools(pool_info):
-    attributes = pool_info.get('attributes', {})
-
-    # Correctly extracting the 'name' from the 'attributes' dictionary
-    token_name = attributes.get('name', 'N/A')
-
-    processed_data = {
-        "Token Name": token_name,
-        "Token Address": pool_info.get('id'),
-        "Base Token Price USD": attributes.get('base_token_price_usd'),
-        "Fully Diluted Valuation (USD)": format_currency(attributes.get('fdv_usd')),
-        "1H Price Change Percentage": format_percentage(attributes.get('price_change_percentage', {}).get('h1'))
-    }
-
-    return processed_data
 async def send_top_pools_info(ctx, toppoolinfo):
     if 'data' not in toppoolinfo or not toppoolinfo['data']:
         await ctx.send("No pool data available.")
@@ -150,8 +134,6 @@ async def send_top_pools_info(ctx, toppoolinfo):
     # Send all embeds in one message
     await ctx.send(embeds=embeds)
 
-
-    await ctx.send(embed=embed)
 def get_token_name_and_pool(token_data):
     # Check if 'data' is in the response and it has at least one item
     if 'data' in token_data and len(token_data['data']) > 0:
@@ -163,24 +145,24 @@ def get_token_name_and_pool(token_data):
         token_name = 'Unknown Token'  # Default name if 'data' is empty or not present
 
     return token_name, pool_address
-async def process_token_info(tokeninfo):
-    df_pools = pd.json_normalize(tokeninfo['data'])
-    pools_data = df_pools.set_index(df_pools['id'].apply(lambda x: x.split('_')[1])).to_dict('index')
-    
-    pool_info = next(iter(pools_data.items()))
+async def process_token_info(pool_info):
+    attributes = pool_info.get('attributes', {})
+    relationships = pool_info.get('relationships', {})
+    # Correctly extracting the 'name' from the 'attributes' dictionary
+    token_name = attributes.get('name', 'N/A')
 
     data_to_display = {
-        "Token Name": pool_info.get('attributes.name', 'N/A'),
+        "Token Name": token_name,
         "Token Address": pool_info.get('id'),
-        "Base Token Price USD": pool_info.get('attributes.base_token_price_usd'),
-        "Quote Token Price USD": format_currency(pool_info.get('attributes.quote_token_price_usd')),
-        "Fully Diluted Valuation (USD)": format_currency(pool_info.get('attributes.fdv_usd')),
-        "Market Cap (USD)": format_currency(pool_info.get('attributes.market_cap_usd')),
-        "1H Price Change Percentage": format_percentage(pool_info.get('attributes.price_change_percentage.h1')),
-        "24H Price Change Percentage": format_percentage(pool_info.get('attributes.price_change_percentage.h24')),
-        "1H Volume (USD)": format_currency(pool_info.get('attributes.volume_usd.h1')),
-        "24H Volume (USD)": format_currency(pool_info.get('attributes.volume_usd.h24')),
-        "Reserve in USD": format_currency(pool_info.get('attributes.reserve_in_usd')),
+        "Base Token Price USD": pool_info.get('base_token_price_usd'),
+        "Quote Token Price USD": format_currency(pool_info.get('quote_token_price_usd')),
+        "Fully Diluted Valuation (USD)": format_currency(pool_info.get('fdv_usd')),
+        "Market Cap (USD)": format_currency(pool_info.get('market_cap_usd')),
+        "1H Price Change Percentage": format_percentage(pool_info.get('price_change_percentage.h1')),
+        "24H Price Change Percentage": format_percentage(pool_info.get('price_change_percentage.h24')),
+        "1H Volume (USD)": format_currency(pool_info.get('volume_usd.h1')),
+        "24H Volume (USD)": format_currency(pool_info.get('volume_usd.h24')),
+        "Reserve in USD": format_currency(pool_info.get('reserve_in_usd')),
         "Base Token ID": pool_info.get('relationships.base_token.data.id', 'N/A'),
         "Quote Token ID": pool_info.get('relationships.quote_token.data.id', 'N/A'),
         "DEX ID": pool_info.get('relationships.dex.data.id', 'N/A')
@@ -320,7 +302,7 @@ async def process_ohlc_data_and_generate_chart(ohlc_data, token_name, chart_type
 
     elif chart_type == 'donchian':
         # Calculate Donchian Channels
-        period = 10
+        period = 25
         df_filtered['Upper'] = df_filtered['High'].rolling(period).max()
         df_filtered['Lower'] = df_filtered['Low'].rolling(period).min()
         df_filtered['Middle'] = (df_filtered['Upper'] + df_filtered['Lower']) / 2

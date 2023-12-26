@@ -27,10 +27,10 @@ async def floor(ctx, slugdisplay):
 
 @commands.command(name='token', help='Get information about a specific token')
 async def token(ctx, token_identifier, network='eth'):
-    tokeninfo = await get_token_info(token_identifier, network)
+    toppoolinfo = await get_token_info(token_identifier, network)
 
-    if tokeninfo is not None:
-        await send_token_info(ctx, tokeninfo)
+    if toppoolinfo is not None:
+        await send_token_info(ctx, toppoolinfo)
     else:
         await ctx.send("Error retrieving token information.")
 @commands.command(name='toppools', help='Get information about a specific wallet')
