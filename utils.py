@@ -109,7 +109,28 @@ def get_token_name(token_data):
 
     return token_name
 
+async def send_dexscreener_token_info(ctx, toppoolinfo):
 
+
+    # Initialize an empty list to hold all embeds
+    embeds = []
+
+    # Process only the first 10 pools
+    for pool_info in toppoolinfo['data'][:10]:
+        processed_data = process_top_pools(pool_info)
+
+        # Create an embed for the pool
+        embed = discord.Embed(title=processed_data["Token Name"], color=0x0099ff)
+        for key, value in processed_data.items():
+            # Ensure value is a string and not too long for an embed field
+            value = str(value)[:1024] if value else 'N/A'
+            embed.add_field(name=key, value=value, inline=False)
+
+        # Add the completed embed for this pool to the list
+        embeds.append(embed)
+
+    # Send all embeds in one message
+    await ctx.send(embeds=embeds)
 async def send_top_pools_info(ctx, toppoolinfo):
     if 'data' not in toppoolinfo or not toppoolinfo['data']:
         await ctx.send("No pool data available.")

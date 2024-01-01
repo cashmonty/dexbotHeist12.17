@@ -203,3 +203,12 @@ async def get_ohlc_data(pool_address, network='eth', timeframe='hour', aggregate
     except Exception as e:
         print(f"Unexpected error: {e}")
         return None
+async def fetch_pair_data(token_identifier):
+    url = f"https://api.dexscreener.com/latest/dex/search/?q={token_identifier}"
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            if response.status == 200:
+                return await response.json()  # Return the JSON response from the API
+            else:
+                print(f"Failed to fetch data: {response.status}")
+                return None

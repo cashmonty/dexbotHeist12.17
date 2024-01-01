@@ -1,7 +1,8 @@
 
 import discord
 from poolfilter import fetch_and_filter_pools
-from apirequest import get_ohlc_data, get_token_info, get_floor_info, get_top_pools, get_trade_info, get_wallet_info, get_cat_pools
+from dexscreenerutils import process_dexscreener_pool, send_dexscreener_token_info
+from apirequest import get_ohlc_data, get_token_info, get_floor_info, get_top_pools, get_trade_info, get_wallet_info, get_cat_pools, fetch_pair_data
 from utils import get_token_name_and_pool, process_ohlc_data_and_generate_chart, process_trades, send_token_info, get_token_name, process_wallet, send_top_pools_info
 from discord.ext import commands
 import textwrap
@@ -143,5 +144,22 @@ async def catfilter(ctx, network='eth'):
             await send_top_pools_info(ctx, toppoolinfo)
         else:
             await ctx.send("No pools found that match the criteria or error retrieving pool information.")
+    except Exception as e:
+        await ctx.send(f"An error occurred: {e}")
+from discord.ext import commands
+
+@commands.command(name='dexscreener', help='Get DexScreener information for a specific token')
+async def dexscreener(ctx, token_identifier):
+    try:
+        pair_data = await fetch_pair_data(token_identifier)
+
+        # Check if there's data and it contains 'pairs'
+        if pair_data and 'pairs' in pair_data and len(pair_data['pairs']) > 0:
+            # Process only the first pair
+            first_pair = pair_data['pairs'][0]
+            processed_data = process_dexscreener_pool(first_pair)
+            await send_dexscreener_token_info(ctx, processed_data)
+        else:
+            await ctx.send(f"No data found for {token_identifier}.")
     except Exception as e:
         await ctx.send(f"An error occurred: {e}")
