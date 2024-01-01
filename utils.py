@@ -109,6 +109,7 @@ def get_token_name(token_data):
 
     return token_name
 
+
 async def send_top_pools_info(ctx, toppoolinfo):
     if 'data' not in toppoolinfo or not toppoolinfo['data']:
         await ctx.send("No pool data available.")

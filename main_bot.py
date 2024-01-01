@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 import os
 from dotenv import load_dotenv
-from commands import chart, chartichi, chartdonchian, token, floor, trades, wallet, toppools, chartfib
+from commands import chart, chartichi, chartdonchian, token, floor, trades, wallet, toppools, chartfib, catfilter
 
 # Load environment variables
 load_dotenv()
@@ -24,7 +24,7 @@ bot.add_command(trades)
 bot.add_command(wallet)
 bot.add_command(toppools)
 bot.add_command(chartfib)
-
+bot.add_command(catfilter)
 @bot.event
 async def on_ready():
     print(f'{bot.user.name} has connected to Discord!')

@@ -91,7 +91,30 @@ async def get_top_pools(network):
             else:
                 print(f"Error fetching data with status code: {response.status}")
                 return None
-            
+async def get_cat_pools(network):
+    base_url = f"https://api.geckoterminal.com/api/v2/networks/{network}/new_pools"
+    headers = {'Accept': 'application/json;version=20230302'}
+    max_pages = 10
+    all_pools = []
+
+    async with aiohttp.ClientSession() as session:
+        for page in range(1, max_pages + 1):
+            params = {'include': 'base_token,quote_token', 'page': page}
+            async with session.get(base_url, headers=headers, params=params) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    pools = data.get('data', [])
+                    
+                    # If there are no pools, we've reached the end
+                    if not pools:
+                        break
+                    
+                    all_pools.extend(pools)
+                else:
+                    print(f"Error fetching data for page {page} with status code: {response.status}")
+                    break  # Stop if there's an error
+
+    return {'data': all_pools}
 async def get_trade_info(token_pool, trade_volume_in_usd_greater_than, network='eth'):
     url = f'https://api.geckoterminal.com/api/v2/networks/{network}/pools/{token_pool}/trades?trade_volume_in_usd_greater_than={trade_volume_in_usd_greater_than}'
 

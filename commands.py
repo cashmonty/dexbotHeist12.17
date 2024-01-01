@@ -1,7 +1,8 @@
 
 import discord
-from apirequest import get_ohlc_data, get_token_info, get_floor_info, get_top_pools, get_trade_info, get_wallet_info
-from utils import get_token_name_and_pool, process_ohlc_data_and_generate_chart, process_trades, send_token_info, get_token_name, process_wallet, send_top_pools_info
+from poolfilter import fetch_and_filter_pools
+from apirequest import get_ohlc_data, get_token_info, get_floor_info, get_top_pools, get_trade_info, get_wallet_info, get_cat_pools
+from utils import get_token_name_and_pool, process_ohlc_data_and_generate_chart, process_trades, send_token_info, get_token_name, process_wallet, send_top_pools_info, send_filtered_pool_info
 from discord.ext import commands
 import textwrap
 
@@ -129,5 +130,18 @@ async def chartfib(ctx, token_address: str, network: str = 'eth', timeframe: str
             await ctx.send(file=discord.File(chart_file))
         else:
             await ctx.send("Failed to fetch OHLC data.")
+    except Exception as e:
+        await ctx.send(f"An error occurred: {e}")
+@commands.command(name='catfilter', help='Get information about the latest pools on a specific network')
+async def catfilter(ctx, network='eth'):
+    try:
+        newpoolinfo = await get_cat_pools(network)
+        toppoolinfo = await fetch_and_filter_pools(newpoolinfo)  # Now asynchronous
+
+        if toppoolinfo is not None:
+            # Pass ctx to send_top_pools_info
+            await send_top_pools_info(ctx, toppoolinfo)
+        else:
+            await ctx.send("No pools found that match the criteria or error retrieving pool information.")
     except Exception as e:
         await ctx.send(f"An error occurred: {e}")
