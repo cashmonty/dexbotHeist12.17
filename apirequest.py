@@ -176,7 +176,7 @@ async def get_wallet_info(wallet_address):
         print(f"Unexpected error: {e}")
         return None
 
-async def get_ohlc_data(pool_address, network='eth', timeframe='hour', aggregate='1', limit='200'):
+async def get_ohlc_data(pool_address, network='eth', timeframe='hour', aggregate='4', limit='200'):
     # Constructing the URL with path parameters
     url = f'https://api.geckoterminal.com/api/v2/networks/{network}/pools/{pool_address}/ohlcv/{timeframe}'
 
