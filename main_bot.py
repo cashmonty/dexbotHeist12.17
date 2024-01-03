@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 import os
 from dotenv import load_dotenv
-from commands import chart, chartichi, chartdonchian, token, floor, trades, wallet, toppools, chartfib, catfilter, dexscreener
+from commands import chart, chartichi, chartdonchian, token, floor, trades, wallet, toppools, chartfib, catfilter, dexscreener, dexbot
 
 # Load environment variables
 load_dotenv()
@@ -13,8 +13,11 @@ intents = discord.Intents.default()
 intents.messages = True  # Enable any other intents as needed
 intents.message_content = True 
 bot = commands.Bot(command_prefix="/", intents=intents)
-
-
+@bot.before_invoke
+async def before_any_command(ctx):
+    ctx.message.content = ctx.message.content.lower()
+    
+bot.add_command(dexbot)
 bot.add_command(token)
 bot.add_command(chart)
 bot.add_command(chartichi)

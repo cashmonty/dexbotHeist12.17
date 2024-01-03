@@ -271,7 +271,20 @@ async def process_ohlc_data_and_generate_chart(ohlc_data, token_name, chart_type
     lower_bound_low = Q1_low - 1.5 * IQR_low
 
     df_filtered = df[(df['High'] <= upper_bound_high) & (df['Low'] >= lower_bound_low)]
+# Determine the span of your data
+    data_span = df_filtered.index.max() - df_filtered.index.min()
 
+    # Define a 4-hour timedelta
+    four_hours = pd.Timedelta(hours=4)
+
+    # Check if the data span is less than 4 hours
+    if data_span < four_hours:
+        # Set the x-axis limit to be from the minimum timestamp to 4 hours ahead
+        four_hour_limit = df_filtered.index.min() + four_hours
+        xlim = (df_filtered.index.min(), four_hour_limit)
+    else:
+        # If there is more than 4 hours of data, use the existing data range
+        xlim = (df_filtered.index.min(), df_filtered.index.max())
     custom_style = create_custom_style()
     
     if chart_type == 'fibonacci':
@@ -279,7 +292,7 @@ async def process_ohlc_data_and_generate_chart(ohlc_data, token_name, chart_type
         low_price = df_filtered['Low'].min()
         title = f'Chart for {token_name}'
         # Plot the initial chart and get the Axes object (or list of objects)
-        fig, ax = mpf.plot(df_filtered, type='candle', style=custom_style, title=title, volume=True, returnfig=True)
+        fig, ax = mpf.plot(df_filtered, type='candle', style=custom_style, title=title, volume=True, returnfig=True, x_lim=xlim)
 
         # Ensure ax is the primary Axes object, not a list
         primary_ax = ax[0] if isinstance(ax, list) else ax
@@ -317,6 +330,7 @@ async def process_ohlc_data_and_generate_chart(ohlc_data, token_name, chart_type
             style=custom_style,
             volume=True,
             addplot=ichimoku_plots,
+            xlim=xlim,
             fill_between=[ichimoku_fill_up, ichimoku_fill_down],
             savefig='ichimoku_chart.png'
         )
@@ -346,6 +360,7 @@ async def process_ohlc_data_and_generate_chart(ohlc_data, token_name, chart_type
         title = f'Chart for {token_name}'
         mpf.plot(
             df_filtered,
+            xlim=xlim,
             title=title,
             type='candle',
             style=custom_style,
@@ -361,6 +376,7 @@ async def process_ohlc_data_and_generate_chart(ohlc_data, token_name, chart_type
         # Default candlestick plot
         mpf.plot(
             df_filtered,
+            xlim=xlim,
             title=title,
             mav=(13,25),
             type='candle',

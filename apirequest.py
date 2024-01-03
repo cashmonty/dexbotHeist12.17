@@ -45,7 +45,7 @@ async def get_floor_info(ctx, slugdisplay):
         all_collections = data.get("data", {}).get("allCollections", {}).get("collections", [])
 
         if not all_collections:
-            await ctx.send("No collections found for the given slug.")
+            await ctx.send("Ensure the slug or display name is correct. Only provides data if available.")
             return
 
     for collection in all_collections:

@@ -11,18 +11,19 @@ async def send_split_messages(ctx, message, char_limit=2000):
     # Split the message into chunks of 'char_limit' characters
     for chunk in textwrap.wrap(message, char_limit, replace_whitespace=False):
         await ctx.send(chunk)
-@commands.command(name='help', help='call cash plz')
-async def help(ctx):
-    # Customize the title, color, and optionally, a description
-    embed = discord.Embed(title="**Cashmontee Commands**", color=0x0099ff, description="List of available commands:")
 
-    # Adding fields for each command
-    embed.add_field(name="**Token Command**", value="`/token <contract address> [network]`\nDefault `[network]` is ETH.", inline=False)
-    embed.add_field(name="**Chart Command**", value="`/chart <contract address> [timeframe] [amount of candles]`\nDefaults to 1h and 100 candles if 1 argument provided.", inline=False)
-    embed.add_field(name="**Chart Command with Indicators**", value="Indicators:\n`/chartichi` (same as `/chart`)\n`/chartdonchian` (same as `/chart`)", inline=False)
+@commands.command(name='dexbot', help='call cash plz')
+async def dexbot(ctx):
 
-    # Sending the embed
-    await ctx.send(embed=embed)
+
+    # Ensure these files exist in your bot's working directory
+    commands_file1 = 'commandshelp1.png'
+    commands_file2 = 'commandshelp2.png'
+
+    # Send the PNG files
+    await ctx.send(file=discord.File(commands_file1))
+    await ctx.send(file=discord.File(commands_file2))
+
 @commands.command(name='floor', help='the floor price yo')
 async def floor(ctx, slugdisplay):
     await get_floor_info(ctx, slugdisplay)
@@ -34,7 +35,7 @@ async def token(ctx, token_identifier, network='eth'):
     if toppoolinfo is not None:
         await send_token_info(ctx, toppoolinfo)
     else:
-        await ctx.send("Error retrieving token information.")
+        await ctx.send("Error retrieving token info. Make sure in your command you format it as /token (name or address) (network). Default network is Eth.")
 @commands.command(name='toppools', help='Get information about a specific wallet')
 async def toppools(ctx, network='eth'):
     toppoolinfo = await get_top_pools(network)  # Fetch token info
@@ -42,7 +43,7 @@ async def toppools(ctx, network='eth'):
     if toppoolinfo is not None:
         await send_top_pools_info(ctx, toppoolinfo)
     else:
-        await ctx.send("Error retrieving token information.")
+        await ctx.send("Error retrieving token information. Default network is Eth, if you would like different type /toppools (network). if Gecko Terminal has it available it will be printed out")
 @commands.command(name='wallet', help='Get information about a specific wallet')
 async def wallet(ctx, wallet_address):
     walletinfo = await get_wallet_info(wallet_address)  # Fetch token info
@@ -50,7 +51,7 @@ async def wallet(ctx, wallet_address):
     if walletinfo is not None:
         await process_wallet(walletinfo, wallet_address, ctx)  # Send formatted token info
     else:
-        await ctx.send("Error retrieving token information.")
+        await ctx.send("Only for Ethereum wallets - provides the last 10 trades of the wallet.")
 @commands.command(name='trades', help='Get information about a specific token')
 async def trades(ctx, token_address, network='eth', trade_volume_in_usd_greater_than='2000'):
     tokeninfo = await get_token_info(token_address, network)
@@ -62,7 +63,7 @@ async def trades(ctx, token_address, network='eth', trade_volume_in_usd_greater_
         else:
             await ctx.send("Error retrieving trade information.")
     else:
-        await ctx.send("Error retrieving token information.")
+        await ctx.send("Error retrieving trade information. For /trades (token address) you can add (network) to specify the trades on a specific non-Eth coin. Additionally, /trades (token address) (network) (trade volume you want to search for (last 24h))")
 
 
 @commands.command(name='chart', help='Generate a simple candlestick chart for a given token and interval')
@@ -79,9 +80,8 @@ async def chart(ctx, token_address: str, network: str = 'eth', timeframe: str = 
         else:
             await ctx.send("Failed to fetch OHLC data.")
     except Exception as e:
-        await ctx.send(f"An error occurred: {e}")
+        await ctx.send("An error occurred. Arguments for /chart are `/chart (token address or symbol) (network(default=eth) (timeframe(minute, hour, day)) (per candle # (example: 1 would be 1h when combined with minute, hour, or day)) (number of candles) -- you can add these extra arguments but default is 1h and 200 candles")
 
-        await ctx.send(f"An error occurred: {e}")
 
 
 @commands.command(name='chartichi', help='Generate a simple candlestick chart for a given token and interval')
@@ -97,7 +97,7 @@ async def chartichi(ctx, token_address: str, network: str = 'eth', timeframe: st
         else:
             await ctx.send("Failed to fetch OHLC data.")
     except Exception as e:
-        await ctx.send(f"An error occurred: {e}")
+        await ctx.send("An error occurred. Arguments for /chartichimoku or /chartdonchian are `(token address or symbol) (network(default=eth) (timeframe(minute, hour, day)) (per candle # (example: 1 would be 1h when combined with minute, hour, or day)) (number of candles) -- you can add these extra arguments but default is 1h and 200 candles")
 
 @commands.command(name='chartdonchian', help='Generate a simple candlestick chart for a given token and interval')
 async def chartdonchian(ctx, token_address: str, network: str = 'eth', timeframe: str = 'hour', aggregate='1', limit: str = '200'):
@@ -112,7 +112,7 @@ async def chartdonchian(ctx, token_address: str, network: str = 'eth', timeframe
         else:
             await ctx.send("Failed to fetch OHLC data.")
     except Exception as e:
-        await ctx.send(f"An error occurred: {e}")
+        await ctx.send("An error occurred. Arguments for /chartichimoku or /chartdonchian are `(token address or symbol) (network(default=eth) (timeframe(minute, hour, day)) (per candle # (example: 1 would be 1h when combined with minute, hour, or day)) (number of candles) -- you can add these extra arguments but default is 1h and 200 candles")
 @commands.command(name='chartfib', help='Generate a candlestick chart with Fibonacci retracement levels for a given token and interval')
 async def chartfib(ctx, token_address: str, network: str = 'eth', timeframe: str = 'hour', aggregate='1', limit: str = '200'):
     try:
@@ -132,7 +132,7 @@ async def chartfib(ctx, token_address: str, network: str = 'eth', timeframe: str
         else:
             await ctx.send("Failed to fetch OHLC data.")
     except Exception as e:
-        await ctx.send(f"An error occurred: {e}")
+        await ctx.send("An error occurred. Arguments for /chartichimoku or /chartdonchian are `(token address or symbol) (network(default=eth) (timeframe(minute, hour, day)) (per candle # (example: 1 would be 1h when combined with minute, hour, or day)) (number of candles) -- you can add these extra arguments but default is 1h and 200 candles")
 @commands.command(name='catfilter', help='Get information about the latest pools on a specific network')
 async def catfilter(ctx, network='eth'):
     try:
