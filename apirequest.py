@@ -131,7 +131,7 @@ async def get_trade_info(token_pool, trade_volume_in_usd_greater_than, network='
                 return None
     # Exception handling remains the same    
 async def get_token_info(token_identifier, network):
-    url = f'https://api.geckoterminal.com/api/v2/search/pools'
+    url = f'https://api.geckoterminal.com/api/v2/networks/{network}/pools/{token_identifier}/info'
     headers = {'Accept': 'application/json;version=20230302'}
     params = {
         'query': token_identifier,

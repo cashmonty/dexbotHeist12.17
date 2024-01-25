@@ -12,26 +12,40 @@ def create_custom_style():
         volume='in', ohlc='i'
     )
     # Get the base style of 'nightclouds'
-    base_style = mpf.make_mpf_style(base_mpf_style='nightclouds', marketcolors=mc, gridcolor='black')
+    base_style = mpf.make_mpf_style(base_mpf_style='nightclouds', marketcolors=mc, gridcolor='white')
 
 
 
     return base_style
 def add_fibonacci_retracement_levels(ax, high, low):
-    # Define inverted Fibonacci levels for retracement (from high to low)
-    fib_levels = [1.0, 0.786, 0.618, 0.5, 0.382, 0.236, 0]
-    fib_colors = ['#4682B4', '#00FA9A', '#FF6347', '#20B2AA', '#8A2BE2', '#FF4500', '#FFD700']
-    
-    # Calculate inverted retracement levels based on high and low prices
-    retracement_levels = [high - (high - low) * level for level in fib_levels]
+    # Initialize Fibonacci levels
+    fib_levels = {}
+    if high > low:
+        # Calculate Fibonacci retracement levels based on the swing high and low
+        fib_levels['23.6%'] = high - (high - low) * 0.236
+        fib_levels['38.2%'] = high - (high - low) * 0.382
+        fib_levels['50.0%'] = high - (high - low) * 0.5
+        fib_levels['61.8%'] = high - (high - low) * 0.618
+        fib_levels['100.0%'] = low
+    else:
+        # Calculate Fibonacci extension levels
+        fib_levels['61.8%'] = low + (high - low) * 0.618
+        fib_levels['100.0%'] = high
+        fib_levels['138.2%'] = low + (high - low) * 1.382
+        fib_levels['161.8%'] = low + (high - low) * 1.618
+        fib_levels['200.0%'] = low + (high - low) * 2.0
 
-    # Plot each inverted Fibonacci level with its color as a solid line and add the price text
-    for level, color, retracement in zip(fib_levels, fib_colors, retracement_levels):
-        ax.axhline(y=retracement, color=color, linestyle='-', linewidth=2, alpha=0.7)
-        # Position the text on the right, indicating the inverted Fibonacci level and price
-        ax.text(0.98, retracement, f'{(1-level):.3f} ({retracement:.2f})', 
+    # Define colors for each level - this needs to be adjusted as per your preference
+    fib_colors = ['blue', 'green', 'red', 'cyan', 'magenta', 'yellow']
+
+    # Plot each Fibonacci level with its color as a solid line and add the price text
+    for (level, price), color in zip(fib_levels.items(), fib_colors):
+        ax.axhline(y=price, color=color, linestyle='-', linewidth=2, alpha=0.7)
+        # Position the text on the right, indicating the Fibonacci level and price
+        ax.text(0.98, price, f'{level} ({price:.2f})', 
                 verticalalignment='center', horizontalalignment='right', 
                 color=color, alpha=0.9, transform=ax.get_yaxis_transform())
+
     return ax
 
 
@@ -104,6 +118,7 @@ def get_token_name(token_data):
     if 'data' in token_data and len(token_data['data']) > 0:
         # Get the 'name' attribute from the first item's 'attributes'
         token_name = token_data['data'][0]['attributes'].get('name', 'N/A')
+        
     else:
         token_name = 'Unknown Token'  # Default name if 'data' is empty or not present
 
@@ -277,7 +292,9 @@ async def process_ohlc_data_and_generate_chart(ohlc_data, token_name, chart_type
     if chart_type == 'fibonacci':
         high_price = df_filtered['High'].max()
         low_price = df_filtered['Low'].min()
+        recent_close_price = df_filtered['Close'].iloc[-1]  # Gets the most recent closing price
         title = f'Chart for {token_name}'
+
         # Plot the initial chart and get the Axes object (or list of objects)
         fig, ax = mpf.plot(df_filtered, type='candle', style=custom_style, title=title, volume=True, returnfig=True)
 
@@ -287,11 +304,16 @@ async def process_ohlc_data_and_generate_chart(ohlc_data, token_name, chart_type
         # Add Fibonacci retracement levels and annotations to the primary Axes
         add_fibonacci_retracement_levels(primary_ax, high_price, low_price)
 
+        # Add a dotted horizontal line for the most recent closing price
+        primary_ax.axhline(recent_close_price, color='gray', linestyle='dotted', linewidth=2, label=f'Current Price: {recent_close_price}')
+
+        # Optional: Add a legend to the plot
+        primary_ax.legend()
+
         # Save the plot to a file
         chart_file = "fibonacci_chart.png"
         fig.savefig(chart_file)
         return chart_file
- 
     if chart_type == 'ichimoku':
         # Calculate the Ichimoku Cloud on the data
         df_filtered = calculate_ichimoku(df)
@@ -310,17 +332,22 @@ async def process_ohlc_data_and_generate_chart(ohlc_data, token_name, chart_type
                                 where=df_filtered['Senkou_Span_A'] < df_filtered['Senkou_Span_B'], alpha=0.5, color='#CD5555')
 
         title = f'Chart for {token_name}'
+        fig, ax = plt.subplots()
         mpf.plot(
             df_filtered,
+            ax=ax,
             title=title,
             type='candle',
             style=custom_style,
             volume=True,
             addplot=ichimoku_plots,
-
-            fill_between=[ichimoku_fill_up, ichimoku_fill_down],
-            savefig='ichimoku_chart.png'
+            fill_between=[ichimoku_fill_up, ichimoku_fill_down]
         )
+        
+        recent_close_price = df_filtered['Close'].iloc[-1]
+        ax.axhline(recent_close_price, color='gray', linestyle='dotted', linewidth=2)
+
+        fig.savefig('ichimoku_chart.png')
         return 'ichimoku_chart.png'
 
     elif chart_type == 'donchian':
@@ -345,28 +372,39 @@ async def process_ohlc_data_and_generate_chart(ohlc_data, token_name, chart_type
             'color': '#2962FF'
         }
         title = f'Chart for {token_name}'
+        fig, ax = plt.subplots()
         mpf.plot(
             df_filtered,
+            ax=ax,
             title=title,
             type='candle',
             style=custom_style,
             volume=True,
             addplot=donchian_plots,
-            fill_between=donchian_fill,
-            savefig='donchian_chart.png'
+            fill_between=donchian_fill
         )
+
+        recent_close_price = df_filtered['Close'].iloc[-1]
+        ax.axhline(recent_close_price, color='gray', linestyle='dotted', linewidth=2)
+
+        fig.savefig('donchian_chart.png')
         return 'donchian_chart.png'
 
     else:
         title = f'Chart for {token_name}'
-        # Default candlestick plot
+        fig, ax = plt.subplots()
         mpf.plot(
             df_filtered,
+            ax=ax,
             title=title,
             mav=(13,25),
             type='candle',
             style=custom_style,
-            volume=True,
-            savefig='default_chart.png'
+            volume=True
         )
+
+        recent_close_price = df_filtered['Close'].iloc[-1]
+        ax.axhline(recent_close_price, color='gray', linestyle='dotted', linewidth=2)
+
+        fig.savefig('default_chart.png')
         return 'default_chart.png'
