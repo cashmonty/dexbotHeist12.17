@@ -71,9 +71,13 @@ async def chart(ctx, token_address: str, network: str = 'eth', timeframe: str = 
     try:
 
         token_data = await get_token_info(token_address, network)
-        token_name, pool_address = get_token_name_and_pool(token_data)
-        ohlc_data = await get_ohlc_data(pool_address, network, timeframe, aggregate, limit)
-        
+        data = token_data['data'][0]
+        attributes = data.get('attributes', {})
+        token_name = attributes.get('name', 'N/A')
+        best_pool_address = data.get('id', 'N/A')
+        ohlc_data = await get_ohlc_data(best_pool_address, network, timeframe, aggregate, limit)
+        print(token_name)
+        print(best_pool_address)        
         if ohlc_data is not None:
             chart_file = await process_ohlc_data_and_generate_chart(ohlc_data, token_name, 'default')
             await ctx.send(file=discord.File(chart_file))
@@ -88,9 +92,13 @@ async def chart(ctx, token_address: str, network: str = 'eth', timeframe: str = 
 async def chartichi(ctx, token_address: str, network: str = 'eth', timeframe: str = 'hour', aggregate='1', limit: str = '200'):
     try:
         token_data = await get_token_info(token_address, network)
-        token_name, pool_address = get_token_name_and_pool(token_data)
-        ohlc_data = await get_ohlc_data(pool_address, network, timeframe, aggregate, limit)
-        
+        data = token_data['data'][0]
+        attributes = data.get('attributes', {})
+        token_name = attributes.get('name', 'N/A')
+        best_pool_address = data.get('id', 'N/A')
+        ohlc_data = await get_ohlc_data(best_pool_address, network, timeframe, aggregate, limit)
+        print(token_name)
+        print(best_pool_address)        
         if ohlc_data is not None:
             chart_file = await process_ohlc_data_and_generate_chart(ohlc_data, token_name, 'ichimoku')
             await ctx.send(file=discord.File(chart_file))
@@ -103,9 +111,13 @@ async def chartichi(ctx, token_address: str, network: str = 'eth', timeframe: st
 async def chartdonchian(ctx, token_address: str, network: str = 'eth', timeframe: str = 'hour', aggregate='1', limit: str = '200'):
     try:
         token_data = await get_token_info(token_address, network)
-        token_name, pool_address = get_token_name_and_pool(token_data)
-        ohlc_data = await get_ohlc_data(pool_address, network, timeframe, aggregate, limit)
-        
+        data = token_data['data'][0]
+        attributes = data.get('attributes', {})
+        token_name = attributes.get('name', 'N/A')
+        best_pool_address = data.get('id', 'N/A')
+        ohlc_data = await get_ohlc_data(best_pool_address, network, timeframe, aggregate, limit)
+        print(token_name)
+        print(best_pool_address)        
         if ohlc_data is not None:
             chart_file = await process_ohlc_data_and_generate_chart(ohlc_data, token_name, 'donchian')
             await ctx.send(file=discord.File(chart_file))
@@ -118,10 +130,13 @@ async def chartfib(ctx, token_address: str, network: str = 'eth', timeframe: str
     try:
         # Fetch token data
         token_data = await get_token_info(token_address, network)
-        token_name, pool_address = get_token_name_and_pool(token_data)
-
-        # Fetch OHLC data
-        ohlc_data = await get_ohlc_data(pool_address, network, timeframe, aggregate, limit)
+        data = token_data['data'][0]
+        attributes = data.get('attributes', {})
+        token_name = attributes.get('name', 'N/A')
+        best_pool_address = data.get('id', 'N/A')
+        print(token_name)
+        print(best_pool_address)
+        ohlc_data = await get_ohlc_data(best_pool_address, network, timeframe, aggregate, limit)
         
         if ohlc_data is not None:
 

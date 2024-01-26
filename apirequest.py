@@ -3,6 +3,7 @@ import datetime
 import asyncio
 import os
 import discord
+import pandas as pd
 import requests
 from utils import get_token_name_and_pool
 
@@ -131,7 +132,9 @@ async def get_trade_info(token_pool, trade_volume_in_usd_greater_than, network='
                 return None
     # Exception handling remains the same    
 async def get_token_info(token_identifier, network):
-    url = f'https://api.geckoterminal.com/api/v2/networks/{network}/pools/{token_identifier}/info'
+    print(token_identifier)
+    print(network)
+    url = f'https://api.geckoterminal.com/api/v2/search/pools?/{token_identifier}/info'
     headers = {'Accept': 'application/json;version=20230302'}
     params = {
         'query': token_identifier,
@@ -139,13 +142,25 @@ async def get_token_info(token_identifier, network):
         'page': 1
     }
 
+async def get_token_info(token_identifier, network='eth', include='include', page=1):
+    print(token_identifier)
+    print(network)
+    url = 'https://api.geckoterminal.com/api/v2/search/pools'
+    headers = {'Accept': 'application/json;version=20230302'}
+    params = {
+        'query': token_identifier,
+        'network': network,
+        'include': include,
+        'page': page
+    }
+
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=headers, params=params) as response:
             if response.status == 200:
-                return await response.json()
+                json_response = await response.json()
+                return json_response
             else:
-                print(f"Error fetching data with status code: {response.status}")
-                return None
+                print("Failed to fetch data:", response.status)
 async def get_wallet_info(wallet_address):
     url = 'https://api.syve.ai/v1/wallet-api/latest-performance-per-token'
     key = SYVE_API_KEY
@@ -196,12 +211,6 @@ async def get_ohlc_data(pool_address, network='eth', timeframe='hour', aggregate
                     return None
     except aiohttp.ClientError as e:
         print(f"HTTP request error: {e}")
-        return None
-    except asyncio.TimeoutError as e:
-        print(f"Request timed out: {e}")
-        return None
-    except Exception as e:
-        print(f"Unexpected error: {e}")
         return None
 async def fetch_pair_data(token_identifier):
     url = f"https://api.dexscreener.com/latest/dex/search/?q={token_identifier}"
