@@ -61,7 +61,7 @@ async def trades(ctx, token_address, network='eth', trade_volume_in_usd_greater_
 
 
 @commands.command(name='chart', help='Generate a simple candlestick chart for a given token and interval')
-async def chart(ctx, token_identifier: str, timeframe: str = 'hour', aggregate='1', limit: str = '200'):
+async def chart(ctx, token_identifier: str, network:str='eth', timeframe: str = 'hour', aggregate='1', limit: str = '200'):
     logging.info(f"Executing command 'chart' with token_identifier: {token_identifier}")
     try:
         pair_data = await fetch_pair_data(token_identifier)
@@ -75,31 +75,36 @@ async def chart(ctx, token_identifier: str, timeframe: str = 'hour', aggregate='
             network_from_data = processed_data['chainId'].lower()
             if network_from_data == 'ethereum':
                 network_from_data = 'eth'
-
+            if network_from_data == 'solana':
+                network_from_data = 'sol'
             # Attempt to fetch OHLC data with the normalized network
-            try:
-                ohlc_data = await get_ohlc_data(pool_address, network_from_data, timeframe, aggregate, limit)
-            except Exception as network_error:
-                logging.warning(f"Failed to fetch OHLC data with network {network_from_data}: {network_error}")
-                # If the specific network fails, fall back to 'eth'
-                ohlc_data = await get_ohlc_data(pool_address, 'eth', timeframe, aggregate, limit)
-            
-            if ohlc_data is not None:
+            networks_to_try = [network, network_from_data, 'sol']
+            ohlc_data = None
+
+            for net in networks_to_try:
+                try:
+                    ohlc_data = await get_ohlc_data(pool_address, net, timeframe, aggregate, limit)
+                    if ohlc_data is not None:
+                        break
+                except Exception as error:
+                    logging.warning(f"Failed to fetch OHLC data with network {net}: {error}")
+
+            if ohlc_data:
                 chart_file = await process_ohlc_data_and_generate_chart(ohlc_data, token_name, 'default')
                 await ctx.send(file=discord.File(chart_file))
             else:
-                await ctx.send("Failed to fetch OHLC data after trying with the specified network and defaulting to 'eth'.")
+                await ctx.send("Failed to fetch OHLC data after trying multiple networks.")
         else:
             await ctx.send("No pair data found for the given token address.")
             
     except Exception as e:
-        logging.error(f"Error in command 'chart': {e}")
+        logging.error(f"Error in command 'chartdonchian': {e}")
         await ctx.send(f"An error occurred: {e}")
 
 
 @commands.command(name='chartichi', help='Generate a simple candlestick chart for a given token and interval')
-async def chartichi(ctx, token_identifier: str, timeframe: str = 'hour', aggregate='1', limit: str = '200'):
-    logging.info(f"Executing command 'token' with token_identifier: {token_identifier}")
+async def chartichi(ctx, token_identifier: str, network: str = 'eth', timeframe: str = 'hour', aggregate='1', limit: str = '200'):
+    logging.info(f"Executing command 'chartichi' with token_identifier: {token_identifier}, network: {network}")
     try:
         pair_data = await fetch_pair_data(token_identifier)
 
@@ -108,35 +113,36 @@ async def chartichi(ctx, token_identifier: str, timeframe: str = 'hour', aggrega
             processed_data = process_dexscreener_pool(first_pair)
             pool_address = processed_data['Pair Address']
             token_name = processed_data['Base Token']
-            # Normalize the network_from_data
             network_from_data = processed_data['chainId'].lower()
             if network_from_data == 'ethereum':
                 network_from_data = 'eth'
+            elif network_from_data == 'solana':
+                network_from_data = 'sol'
+            networks_to_try = [network, network_from_data, 'sol']
+            ohlc_data = None
 
-            # Attempt to fetch OHLC data with the normalized network
-            try:
-                ohlc_data = await get_ohlc_data(pool_address, network_from_data, timeframe, aggregate, limit)
-            except Exception as network_error:
-                logging.warning(f"Failed to fetch OHLC data with network {network_from_data}: {network_error}")
-                # If the specific network fails, fall back to 'eth'
-                ohlc_data = await get_ohlc_data(pool_address, 'eth', timeframe, aggregate, limit)
-            
-            if ohlc_data is not None:
-                chart_file = await process_ohlc_data_and_generate_chart(ohlc_data, token_name, 'ichimoku')
+            for net in networks_to_try:
+                try:
+                    ohlc_data = await get_ohlc_data(pool_address, net, timeframe, aggregate, limit)
+                    if ohlc_data is not None:
+                        break
+                except Exception as error:
+                    logging.warning(f"Failed to fetch OHLC data with network {net}: {error}")
+
+            if ohlc_data:
+                chart_file = await process_ohlc_data_and_generate_chart(ohlc_data, token_name, 'chartichi')
                 await ctx.send(file=discord.File(chart_file))
             else:
-                await ctx.send("Failed to fetch OHLC data after trying with the specified network and defaulting to 'eth'.")
+                await ctx.send("Failed to fetch OHLC data after trying multiple networks.")
         else:
             await ctx.send("No pair data found for the given token address.")
             
     except Exception as e:
-        logging.error(f"Error in command 'chart': {e}")
+        logging.error(f"Error in command 'chartdonchian': {e}")
         await ctx.send(f"An error occurred: {e}")
-
 @commands.command(name='chartdonchian', help='Generate a simple candlestick chart for a given token and interval')
-async def chartdonchian(ctx, token_identifier: str, timeframe: str = 'hour', aggregate='1', limit: str = '200'):
-
-    logging.info(f"Executing command 'token' with token_identifier: {token_identifier}")
+async def chartdonchian(ctx, token_identifier: str, network: str = 'eth', timeframe: str = 'hour', aggregate='1', limit: str = '200'):
+    logging.info(f"Executing command 'chartdonchian' with token_identifier: {token_identifier}, network: {network}")
     try:
         pair_data = await fetch_pair_data(token_identifier)
 
@@ -145,34 +151,38 @@ async def chartdonchian(ctx, token_identifier: str, timeframe: str = 'hour', agg
             processed_data = process_dexscreener_pool(first_pair)
             pool_address = processed_data['Pair Address']
             token_name = processed_data['Base Token']
-            # Normalize the network_from_data
             network_from_data = processed_data['chainId'].lower()
             if network_from_data == 'ethereum':
                 network_from_data = 'eth'
+            elif network_from_data == 'solana':
+                network_from_data = 'sol'
 
-            # Attempt to fetch OHLC data with the normalized network
-            try:
-                ohlc_data = await get_ohlc_data(pool_address, network_from_data, timeframe, aggregate, limit)
-            except Exception as network_error:
-                logging.warning(f"Failed to fetch OHLC data with network {network_from_data}: {network_error}")
-                # If the specific network fails, fall back to 'eth'
-                ohlc_data = await get_ohlc_data(pool_address, 'eth', timeframe, aggregate, limit)
-            
-            if ohlc_data is not None:
+            networks_to_try = [network, network_from_data, 'sol']
+            ohlc_data = None
+
+            for net in networks_to_try:
+                try:
+                    ohlc_data = await get_ohlc_data(pool_address, net, timeframe, aggregate, limit)
+                    if ohlc_data is not None:
+                        break
+                except Exception as error:
+                    logging.warning(f"Failed to fetch OHLC data with network {net}: {error}")
+
+            if ohlc_data:
                 chart_file = await process_ohlc_data_and_generate_chart(ohlc_data, token_name, 'donchian')
                 await ctx.send(file=discord.File(chart_file))
             else:
-                await ctx.send("Failed to fetch OHLC data after trying with the specified network and defaulting to 'eth'.")
+                await ctx.send("Failed to fetch OHLC data after trying multiple networks.")
         else:
             await ctx.send("No pair data found for the given token address.")
             
     except Exception as e:
-        logging.error(f"Error in command 'chart': {e}")
+        logging.error(f"Error in command 'chartdonchian': {e}")
         await ctx.send(f"An error occurred: {e}")
 
-@commands.command(name='chartfib', help='Generate a candlestick chart with Fibonacci retracement levels for a given token and interval')
-async def chartfib(ctx, token_identifier: str, timeframe: str = 'hour', aggregate='1', limit: str = '200'):
-    logging.info(f"Executing command 'token' with token_identifier: {token_identifier}")
+@commands.command(name='chartfib', help='Generate a simple candlestick chart for a given token and interval')
+async def chartfib(ctx, token_identifier: str, network: str = 'eth', timeframe: str = 'hour', aggregate='1', limit: str = '200'):
+    logging.info(f"Executing command 'chartfibonacci' with token_identifier: {token_identifier}, network: {network}")
     try:
         pair_data = await fetch_pair_data(token_identifier)
 
@@ -181,32 +191,36 @@ async def chartfib(ctx, token_identifier: str, timeframe: str = 'hour', aggregat
             processed_data = process_dexscreener_pool(first_pair)
             pool_address = processed_data['Pair Address']
             token_name = processed_data['Base Token']
-            # Normalize the network_from_data
             network_from_data = processed_data['chainId'].lower()
             if network_from_data == 'ethereum':
                 network_from_data = 'eth'
+            elif network_from_data == 'solana':
+                network_from_data = 'sol'
 
-            # Attempt to fetch OHLC data with the normalized network
-            try:
-                ohlc_data = await get_ohlc_data(pool_address, network_from_data, timeframe, aggregate, limit)
-            except Exception as network_error:
-                logging.warning(f"Failed to fetch OHLC data with network {network_from_data}: {network_error}")
-                # If the specific network fails, fall back to 'eth'
-                ohlc_data = await get_ohlc_data(pool_address, 'eth', timeframe, aggregate, limit)
-            
-            if ohlc_data is not None:
+            networks_to_try = [network, network_from_data, 'sol']
+            ohlc_data = None
+
+            for net in networks_to_try:
+                try:
+                    ohlc_data = await get_ohlc_data(pool_address, net, timeframe, aggregate, limit)
+                    if ohlc_data is not None:
+                        break
+                except Exception as error:
+                    logging.warning(f"Failed to fetch OHLC data with network {net}: {error}")
+
+            if ohlc_data:
                 chart_file = await process_ohlc_data_and_generate_chart(ohlc_data, token_name, 'fibonacci')
                 await ctx.send(file=discord.File(chart_file))
             else:
-                await ctx.send("Failed to fetch OHLC data after trying with the specified network and defaulting to 'eth'.")
+                await ctx.send("Failed to fetch OHLC data after trying multiple networks.")
         else:
             await ctx.send("No pair data found for the given token address.")
             
     except Exception as e:
-        logging.error(f"Error in command 'chart': {e}")
+        logging.error(f"Error in command 'chartdonchian': {e}")
         await ctx.send(f"An error occurred: {e}")
 @commands.command(name='chartmp', help='Generate a candlestick chart with Fibonacci retracement levels for a given token and interval')
-async def chartmp(ctx, token_identifier: str, timeframe: str = 'minute', aggregate='1', limit: str = '1000'):
+async def chartmp(ctx, token_identifier: str,  network:str = 'eth',timeframe: str = 'minute', aggregate='1', limit: str = '1000'):
     logging.info(f"Executing command 'token' with token_identifier: {token_identifier}")
     try:
         pair_data = await fetch_pair_data(token_identifier)
@@ -220,25 +234,29 @@ async def chartmp(ctx, token_identifier: str, timeframe: str = 'minute', aggrega
             network_from_data = processed_data['chainId'].lower()
             if network_from_data == 'ethereum':
                 network_from_data = 'eth'
+            if network_from_data == 'solana':
+                network_from_data = 'sol'
+            networks_to_try = [network, network_from_data, 'sol']
+            ohlc_data = None
 
-            # Attempt to fetch OHLC data with the normalized network
-            try:
-                ohlc_data = await get_ohlc_data(pool_address, network_from_data, timeframe, aggregate, limit)
-            except Exception as network_error:
-                logging.warning(f"Failed to fetch OHLC data with network {network_from_data}: {network_error}")
-                # If the specific network fails, fall back to 'eth'
-                ohlc_data = await get_ohlc_data(pool_address, 'eth', timeframe, aggregate, limit)
-            
-            if ohlc_data is not None:
+            for net in networks_to_try:
+                try:
+                    ohlc_data = await get_ohlc_data(pool_address, net, timeframe, aggregate, limit)
+                    if ohlc_data is not None:
+                        break
+                except Exception as error:
+                    logging.warning(f"Failed to fetch OHLC data with network {net}: {error}")
+
+            if ohlc_data:
                 chart_file = await process_ohlc_data_and_generate_chart(ohlc_data, token_name, 'profiles')
                 await ctx.send(file=discord.File(chart_file))
             else:
-                await ctx.send("Failed to fetch OHLC data after trying with the specified network and defaulting to 'eth'.")
+                await ctx.send("Failed to fetch OHLC data after trying multiple networks.")
         else:
             await ctx.send("No pair data found for the given token address.")
             
     except Exception as e:
-        logging.error(f"Error in command 'chart': {e}")
+        logging.error(f"Error in command 'chartdonchian': {e}")
         await ctx.send(f"An error occurred: {e}")
 @commands.command(name='catfilter', help='Get information about the latest pools on a specific network')
 async def catfilter(ctx, network='eth'):
