@@ -1,38 +1,53 @@
+import logging
 import pandas as pd
 import mplfinance as mpf
 import discord
 import matplotlib.pyplot as plt
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 def create_custom_style():
-    # Define market colors for up and down candles
+    logging.info("Creating custom style for chart")
     mc = mpf.make_marketcolors(
         up='lightgreen', down='lightcoral',
         edge='inherit', wick='inherit',
         volume='in', ohlc='i'
     )
     # Get the base style of 'nightclouds'
-    base_style = mpf.make_mpf_style(base_mpf_style='nightclouds', marketcolors=mc, gridcolor='black')
+    base_style = mpf.make_mpf_style(base_mpf_style='nightclouds', marketcolors=mc, gridcolor='grey')
 
 
 
     return base_style
 def add_fibonacci_retracement_levels(ax, high, low):
-    # Define inverted Fibonacci levels for retracement (from high to low)
-    fib_levels = [1.0, 0.786, 0.618, 0.5, 0.382, 0.236, 0]
-    fib_colors = ['#4682B4', '#00FA9A', '#FF6347', '#20B2AA', '#8A2BE2', '#FF4500', '#FFD700']
-    
-    # Calculate inverted retracement levels based on high and low prices
-    retracement_levels = [high - (high - low) * level for level in fib_levels]
+        logging.info("Adding Fibonacci retracement levels")
+        fib_levels = {}
+        if high > low:
+            # Calculate Fibonacci retracement levels based on the swing high and low
+            fib_levels['23.6%'] = high - (high - low) * 0.236
+            fib_levels['38.2%'] = high - (high - low) * 0.382
+            fib_levels['50.0%'] = high - (high - low) * 0.5
+            fib_levels['61.8%'] = high - (high - low) * 0.618
+            fib_levels['100.0%'] = low
+        else:
+            # Calculate Fibonacci extension levels
+            fib_levels['61.8%'] = low + (high - low) * 0.618
+            fib_levels['100.0%'] = high
+            fib_levels['138.2%'] = low + (high - low) * 1.382
+            fib_levels['161.8%'] = low + (high - low) * 1.618
+            fib_levels['200.0%'] = low + (high - low) * 2.0
 
-    # Plot each inverted Fibonacci level with its color as a solid line and add the price text
-    for level, color, retracement in zip(fib_levels, fib_colors, retracement_levels):
-        ax.axhline(y=retracement, color=color, linestyle='-', linewidth=2, alpha=0.7)
-        # Position the text on the right, indicating the inverted Fibonacci level and price
-        ax.text(0.98, retracement, f'{(1-level):.3f} ({retracement:.2f})', 
+        # Define colors for each level - this needs to be adjusted as per your preference
+        fib_colors = ['blue', 'green', 'red', 'cyan', 'magenta', 'yellow']
+
+        # Plot each Fibonacci level with its color as a solid line and add the price text
+        for (level, price), color in zip(fib_levels.items(), fib_colors):
+            ax.axhline(y=price, color=color, linestyle='-', linewidth=2, alpha=0.7)
+            # Position the text on the right, indicating the Fibonacci level and price
+            ax.text(0.98, price, f'{level} ({price:.2f})', 
                 verticalalignment='center', horizontalalignment='right', 
-                color=color, alpha=0.9, transform=ax.get_yaxis_transform())
-    return ax
+                color=color, alpha=0.9, transform=ax.get_yaxis_transform())            
+        return ax
 
 
 def calculate_ichimoku(df):
@@ -100,14 +115,15 @@ def process_top_pools(pool_data):
 
 # Ensure that format_currency and format_percentage functions are defined here.
 def get_token_name(token_data):
-    # Check if 'data' is in the response and it has at least one item
+    logging.info("error get namet")
     if 'data' in token_data and len(token_data['data']) > 0:
-        # Get the 'name' attribute from the first item's 'attributes'
+        pool_address = token_data['data'][0]['attributes'].get('address', 'N/A')
+        print(pool_address)
         token_name = token_data['data'][0]['attributes'].get('name', 'N/A')
     else:
         token_name = 'Unknown Token'  # Default name if 'data' is empty or not present
 
-    return token_name
+    return token_name, pool_address
 
 async def send_dexscreener_token_info(ctx, toppoolinfo):
 
@@ -157,7 +173,7 @@ async def send_top_pools_info(ctx, toppoolinfo):
     await ctx.send(embeds=embeds)
 
 def get_token_name_and_pool(token_data):
-    # Check if 'data' is in the response and it has at least one item
+    logging.info("get name and pool error")
     if 'data' in token_data and len(token_data['data']) > 0:
         # Get the 'name' attribute from the first item's 'attributes'
         token_name = token_data['data'][0]['attributes'].get('name', 'N/A')
@@ -249,52 +265,65 @@ async def process_trades(trade_data, token_name, token_pool, ctx):
 
     await ctx.send(embed=embed)
 async def process_ohlc_data_and_generate_chart(ohlc_data, token_name, chart_type):
-    # Extract OHLCV data
-    ohlcv_list = ohlc_data['data']['attributes']['ohlcv_list']
-    
-    # Create DataFrame
-    df = pd.DataFrame(ohlcv_list, columns=['Timestamp', 'Open', 'High', 'Low', 'Close', 'Volume'])
-    df['Timestamp'] = pd.to_datetime(df['Timestamp'], unit='s')  # assuming the timestamp is in seconds
-    df.set_index('Timestamp', inplace=True)
+    try:
+        # [Your existing code for processing and generating chart]
+        logging.info("error ohlcv chart generate")
+        ohlcv_list = ohlc_data['data']['attributes']['ohlcv_list']
+        
+        # Create DataFrame
+        df = pd.DataFrame(ohlcv_list, columns=['Timestamp', 'Open', 'High', 'Low', 'Close', 'Volume'])
+        df['Timestamp'] = pd.to_datetime(df['Timestamp'], unit='s')  # assuming the timestamp is in seconds
+        df.set_index('Timestamp', inplace=True)
 
-    df.sort_index(ascending=True, inplace=True)
+        df.sort_index(ascending=True, inplace=True)
 
-    Q1_high = df['High'].quantile(0.25)
-    Q3_high = df['High'].quantile(0.75)
-    IQR_high = Q3_high - Q1_high
+        Q1_high = df['High'].quantile(0.25)
+        Q3_high = df['High'].quantile(0.75)
+        IQR_high = Q3_high - Q1_high
 
-    Q1_low = df['Low'].quantile(0.25)
-    Q3_low = df['Low'].quantile(0.75)
-    IQR_low = Q3_low - Q1_low
+        Q1_low = df['Low'].quantile(0.25)
+        Q3_low = df['Low'].quantile(0.75)
+        IQR_low = Q3_low - Q1_low
 
-    upper_bound_high = Q3_high + 1.5 * IQR_high
-    lower_bound_low = Q1_low - 1.5 * IQR_low
+        upper_bound_high = Q3_high + 1.5 * IQR_high
+        lower_bound_low = Q1_low - 1.5 * IQR_low
 
-    df_filtered = df[(df['High'] <= upper_bound_high) & (df['Low'] >= lower_bound_low)]
+        df_filtered = df[(df['High'] <= upper_bound_high) & (df['Low'] >= lower_bound_low)]
 
-    custom_style = create_custom_style()
-    
+        custom_style = create_custom_style()
+        recent_close_price = df_filtered['Close'].iloc[-1]
+
+    except Exception as e:
+        logging.error("Error in generating chart: %s", e)
+        raise
+
     if chart_type == 'fibonacci':
         high_price = df_filtered['High'].max()
         low_price = df_filtered['Low'].min()
+        figsize = (12, 8)
         title = f'Chart for {token_name}'
         # Plot the initial chart and get the Axes object (or list of objects)
-        fig, ax = mpf.plot(df_filtered, type='candle', style=custom_style, title=title, volume=True, returnfig=True)
+        fig, ax = mpf.plot(df_filtered, type='candle', style=custom_style, title=title, volume=True, figsize=figsize, returnfig=True)
 
         # Ensure ax is the primary Axes object, not a list
         primary_ax = ax[0] if isinstance(ax, list) else ax
 
         # Add Fibonacci retracement levels and annotations to the primary Axes
         add_fibonacci_retracement_levels(primary_ax, high_price, low_price)
+        primary_ax.axhline(recent_close_price, color='gray', linestyle='dotted', linewidth=2, label=f'Current Price: {recent_close_price}')
 
+        # Optional: Add a legend to the plot
+        primary_ax.legend()
+        fig.tight_layout()
         # Save the plot to a file
         chart_file = "fibonacci_chart.png"
         fig.savefig(chart_file)
         return chart_file
- 
+    
+    # Ichimoku Chart
     if chart_type == 'ichimoku':
         # Calculate the Ichimoku Cloud on the data
-        df_filtered = calculate_ichimoku(df)
+        df_filtered = calculate_ichimoku(df_filtered)  # Assuming this function exists and is correct
         ichimoku_plots = [
             mpf.make_addplot(df_filtered['Tenkan-sen'], color='#00FFFF'),  # Cyan for Tenkan-sen
             mpf.make_addplot(df_filtered['Kijun-sen'], color='#FF00FF'),   # Magenta for Kijun-sen
@@ -308,21 +337,18 @@ async def process_ohlc_data_and_generate_chart(ohlc_data, token_name, chart_type
                                 where=df_filtered['Senkou_Span_A'] >= df_filtered['Senkou_Span_B'], alpha=0.5, color='#a6f7a6')
         ichimoku_fill_down = dict(y1=df_filtered['Senkou_Span_A'].values, y2=df_filtered['Senkou_Span_B'].values,
                                 where=df_filtered['Senkou_Span_A'] < df_filtered['Senkou_Span_B'], alpha=0.5, color='#CD5555')
-
+        figsize = (12,8)
         title = f'Chart for {token_name}'
-        mpf.plot(
-            df_filtered,
-            title=title,
-            type='candle',
-            style=custom_style,
-            volume=True,
-            addplot=ichimoku_plots,
+        fig, ax_list = mpf.plot(df_filtered, type='candle', style=custom_style, title=title, volume=True, addplot=ichimoku_plots,fill_between=[ichimoku_fill_up, ichimoku_fill_down], figsize=figsize, returnfig=True)
 
-            fill_between=[ichimoku_fill_up, ichimoku_fill_down],
-            savefig='ichimoku_chart.png'
-        )
-        return 'ichimoku_chart.png'
+        ax = ax_list[0] if isinstance(ax_list, list) else ax_list
+        ax.axhline(recent_close_price, color='gray', linestyle='dotted', linewidth=2)
+        fig.tight_layout()
+        chart_file = 'ichimoku_chart.png'
+        fig.savefig(chart_file)
+        return chart_file
 
+    # Donchian Chart
     elif chart_type == 'donchian':
         # Calculate Donchian Channels
         period = 25
@@ -344,29 +370,103 @@ async def process_ohlc_data_and_generate_chart(ohlc_data, token_name, chart_type
             'alpha': 0.1,
             'color': '#2962FF'
         }
+        figsize = (12,8)
         title = f'Chart for {token_name}'
-        mpf.plot(
-            df_filtered,
-            title=title,
-            type='candle',
-            style=custom_style,
-            volume=True,
-            addplot=donchian_plots,
-            fill_between=donchian_fill,
-            savefig='donchian_chart.png'
-        )
-        return 'donchian_chart.png'
+        fig, ax_list = mpf.plot(df_filtered, type='candle', style=custom_style, title=title, volume=True, addplot=donchian_plots,fill_between=donchian_fill, figsize=figsize, returnfig=True)
 
+        ax = ax_list[0] if isinstance(ax_list, list) else ax_list
+        ax.axhline(recent_close_price, color='gray', linestyle='dotted', linewidth=2)
+        fig.tight_layout()
+        chart_file = 'donchian_chart.png'
+        fig.savefig(chart_file)
+        return chart_file
+    if chart_type == 'profiles':
+                # Resample to get 1-hour candles from 1-minute data
+        df_1h = df.resample('1H').agg({
+                    'Open': 'first',
+                    'High': 'max',
+                    'Low': 'min',
+                    'Close': 'last',
+                    'Volume': 'sum'
+                })
+
+        # Calculate the typical price for each 1-minute candle
+        df_filtered['Typical_Price'] = df_filtered[['High', 'Low', 'Close']].mean(axis=1)
+
+        # Calculate the average of the 'Close' prices across all 1-minute candles
+        average_close_price = df_filtered['Close'].mean()
+
+        # Create a constant column with the average close price for vectorized operations
+        df_filtered['Average_Close_Price'] = average_close_price
+
+        # Calculate the average of the typical price and the average close price
+        df_filtered['POC_Price'] = df_filtered[['Typical_Price', 'Average_Close_Price']].mean(axis=1)
+        rounded_h_poc_prices = df_1h['Close'].round(1)
+        h_poc_roundeddf_1h = rounded_h_poc_prices.value_counts()
+        h_poc_max_occurence = h_poc_roundeddf_1h.idxmax()
+        # Round the POC price to two decimal places for the market profile calculation
+        rounded_poc_prices = df_filtered['POC_Price'].round(2)
+
+        # Calculate the price occurrences
+        price_occurrences = rounded_poc_prices.value_counts()
+
+        # Find the price level with the highest occurrence, the POC
+        max_occurrence_price = price_occurrences.idxmax()
+
+        # Output the rounded POC price statistics and POC for verification
+        print(rounded_poc_prices.describe())
+        print(price_occurrences.head())
+        print(f"The Point of Control (POC) price is: {max_occurrence_price}")
+        # Calculate the price occurrence
+
+
+        # Now, plot the chart using the original 1-hour candle data
+        title = f'Market Profiles Chart for {token_name} with POC'
+        figsize = (12, 8)
+        fig, ax_list = mpf.plot(
+                df_1h,
+                type='candle',
+                style=custom_style,
+                title=f"Market Profiles Chart for {token_name}",
+                volume=True,
+                figsize=figsize,
+                returnfig=True
+            )
+        ax = ax_list[0] if isinstance(ax_list, list) else ax_list
+
+            # Add POC line
+        ax.axhline(y=max_occurrence_price, color='magenta', linestyle='-', linewidth=2, label=f'CUSTOMPOC: {max_occurrence_price}')
+        ax.axhline(y=h_poc_max_occurence, color='blue', linestyle='-', linewidth=2, label=f'1h POC: {h_poc_max_occurence}')
+        ax.legend()
+        fig.tight_layout()  # Adjust layout
+
+        chart_file = 'market_profiles_chart.png'
+        fig.savefig(chart_file)
+        return chart_file
     else:
         title = f'Chart for {token_name}'
-        # Default candlestick plot
-        mpf.plot(
+        figsize = (12, 8)
+
+        # Default candlestick plot with adjusted figure size
+        fig, ax_list = mpf.plot(
             df_filtered,
-            title=title,
-            mav=(13,25),
             type='candle',
+            mav=(13, 25),
             style=custom_style,
+            title=title,
             volume=True,
-            savefig='default_chart.png'
+            figsize=figsize,  # Apply the figure size here
+            returnfig=True
         )
-        return 'default_chart.png'
+
+        # Ensure ax is the primary Axes object, not a list
+        ax = ax_list[0] if isinstance(ax_list, list) else ax_list
+        ax.axhline(recent_close_price, color='gray', linestyle='dotted', linewidth=2)
+
+        # Apply a tight layout to ensure everything fits into the plot without clipping
+        fig.tight_layout()
+
+        # Save the chart to a file
+        chart_file = 'default_chart.png'
+        fig.savefig(chart_file)
+        return chart_file

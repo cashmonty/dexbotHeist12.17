@@ -142,6 +142,7 @@ async def get_token_info(token_identifier, network):
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=headers, params=params) as response:
             if response.status == 200:
+
                 return await response.json()
             else:
                 print(f"Error fetching data with status code: {response.status}")
@@ -176,7 +177,7 @@ async def get_wallet_info(wallet_address):
         print(f"Unexpected error: {e}")
         return None
 
-async def get_ohlc_data(pool_address, network='eth', timeframe='hour', aggregate='4', limit='200'):
+async def get_ohlc_data(pool_address, network, timeframe, aggregate, limit):
     # Constructing the URL with path parameters
     url = f'https://api.geckoterminal.com/api/v2/networks/{network}/pools/{pool_address}/ohlcv/{timeframe}'
 
@@ -190,6 +191,7 @@ async def get_ohlc_data(pool_address, network='eth', timeframe='hour', aggregate
         async with aiohttp.ClientSession() as session:
             async with session.get(url, params=params) as response:
                 if response.status == 200:
+
                     return await response.json()
                 else:
                     print(f"Error fetching data with status code: {response.status}")
@@ -208,6 +210,7 @@ async def fetch_pair_data(token_identifier):
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
             if response.status == 200:
+
                 return await response.json()  # Return the JSON response from the API
             else:
                 print(f"Failed to fetch data: {response.status}")

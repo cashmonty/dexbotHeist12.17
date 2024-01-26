@@ -12,9 +12,11 @@ def format_percentage(value):
         return "N/A"
 def process_dexscreener_pool(pool_data):
     # Extract the base token name and address
+    chain_id = pool_data.get('chainId', 'N/A')
     quote_token = pool_data.get('quoteToken', {})
     quote_token_name = quote_token.get('symbol', 'N/A')
     base_token = pool_data.get('baseToken', {})
+    pair_data = pool_data.get('pairAddress', 'N/A')
     base_token_name = base_token.get('name', 'N/A')
     base_token_address = base_token.get('address', 'N/A')
     base_token_str = f"{base_token_name} ({base_token_address})"
@@ -28,6 +30,8 @@ def process_dexscreener_pool(pool_data):
     fdv = format_currency(pool_data.get('fdv', 'N/A'))
 
     processed_data = {
+        "chainId": chain_id,
+        "Pair Address": pair_data,
         "Quote Token/Network": quote_token_str,
         "Base Token": base_token_str,
         "Price USD": price_usd,
