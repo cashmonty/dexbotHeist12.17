@@ -2,7 +2,7 @@ import pandas as pd
 import requests
 
 # Constants
-apikey = "sk_live_5db81dff5c0145b9a1c81088cc6402dd"
+
 solanafmBaseUrl = "https://api.solana.fm"
 epochFromTimestamp = "1703538136"
 epochToTimestamp = "1704142936"

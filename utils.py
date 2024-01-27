@@ -120,6 +120,7 @@ def get_token_name(token_data):
         pool_address = token_data['data'][0]['attributes'].get('address', 'N/A')
         print(pool_address)
         token_name = token_data['data'][0]['attributes'].get('name', 'N/A')
+        
     else:
         token_name = 'Unknown Token'  # Default name if 'data' is empty or not present
 
@@ -302,6 +303,7 @@ async def process_ohlc_data_and_generate_chart(ohlc_data, token_name, chart_type
         low_price = df_filtered['Low'].min()
         figsize = (12, 8)
         title = f'Chart for {token_name}'
+
         # Plot the initial chart and get the Axes object (or list of objects)
         fig, ax = mpf.plot(df_filtered, type='candle', style=custom_style, title=title, volume=True, figsize=figsize, returnfig=True)
 
